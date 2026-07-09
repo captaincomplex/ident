@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Secrets / local config (never commit)
+config.json
+.flightwall/
+.env
+*.key
+*_secret*
+*.cache-*
+
+# Large build/archive artifacts
+*.zip
+*.mp4

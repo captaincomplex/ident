@@ -1,0 +1,32 @@
+{
+  "_comment": "Copied to ~/.flightwall/config.json on first run and editable from the web UI. You normally never edit this by hand.",
+
+  "airline_iata": "U2",
+  "airline_icao": "EZY",
+  "base": "LGW",
+
+  "ical_url": "https://calendar.google.com/calendar/ical/XXXXX%40group.calendar.google.com/public/basic.ics",
+
+  "debrief_minutes": 30,
+  "walk_minutes": 8,
+  "commute_minutes": 45,
+  "use_maps_commute": false,
+
+  "home_lat": null, "home_lng": null,
+  "base_lat": null, "base_lng": null,
+  "google_maps_api_key": "",
+
+  "tz_mode": "base",
+  "rows": 32, "cols": 64, "chain": 2,
+  "brightness": 60,
+  "hardware_mapping": "adafruit-hat",
+  "renderer": "simulator",
+
+  "tracker": "aerodatabox",
+  "aerodatabox_key": "",
+  "opensky_user": "", "opensky_pass": "",
+  "poll_seconds": 180,
+
+  "report_lead_min": 60,
+  "duty_gap_hours": 5.0
+}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight Wall — roster edition</title>
+<meta name="description" content="A Raspberry Pi + LED-matrix wall that shows your airline crew roster, tracks your live flight, and estimates your time home.">
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111823; --panel2:#0e141d; --line:#1e2b3a;
+    --text:#e8eef6; --muted:#93a4b8; --accent:#33b1ff; --accent2:#ffd23f;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+  header{padding:80px 0 48px;text-align:center;border-bottom:1px solid var(--line);
+    background:radial-gradient(1200px 400px at 50% -10%,rgba(51,177,255,.12),transparent)}
+  .eyebrow{font-family:var(--mono);letter-spacing:.35em;text-transform:uppercase;
+    font-size:12px;color:var(--accent);margin-bottom:16px}
+  h1{font-size:clamp(2.2rem,6vw,3.6rem);margin:0 0 12px;letter-spacing:-.02em}
+  .tag{color:var(--muted);font-size:clamp(1rem,2.4vw,1.25rem);max-width:640px;margin:0 auto}
+  .hero-shot{margin:40px auto 0;max-width:820px}
+  .hero-shot img{width:100%;border-radius:10px;border:1px solid var(--line);
+    image-rendering:pixelated;background:#000}
+  .cap{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.6rem;margin:0 0 8px;letter-spacing:-.01em}
+  .lead{color:var(--muted);margin:0 0 28px}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+  .card h3{margin:0 0 6px;font-size:1.05rem}
+  .card p{margin:0;color:var(--muted);font-size:.95rem}
+  .states{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .chip{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--panel2);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  .shots{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .shot{background:#000;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .shot img{width:100%;display:block;image-rendering:pixelated}
+  .shot .cap{margin:0;padding:10px 14px;text-align:left;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  td,th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600}
+  code,pre{font-family:var(--mono)}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:18px;overflow:auto;font-size:.85rem;color:#cfe3f5}
+  .outputs{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .note{background:var(--panel2);border-left:3px solid var(--accent2);
+    padding:14px 18px;border-radius:0 8px 8px 0;color:var(--muted);font-size:.92rem}
+  footer{padding:40px 0 64px;color:var(--muted);font-size:.9rem;text-align:center}
+  .cta{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:14px;
+    border:1px solid var(--accent);color:var(--accent);padding:10px 20px;border-radius:8px}
+  .cta:hover{background:var(--accent);color:#04121e;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Raspberry Pi &middot; LED Matrix</div>
+    <h1>Flight&nbsp;Wall</h1>
+    <p class="tag">A wall that shows <strong>your</strong> airline crew roster &mdash; not whatever
+      plane happens to be overhead. It knows what to display by state, tracks your live flight while
+      airborne, and estimates your time home.</p>
+    <div class="hero-shot">
+      <img src="assets/full_128x32_inflight.png" alt="Full 128x32 LED matrix showing flight EZY8243 LGW to SKG in flight, with a route arc, LAND 09:48 and HOME 15:57">
+      <p class="cap">In-flight view on a 128&times;32 panel: route arc with a moving aircraft marker, landing time, and estimated home time.</p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="lead">Built around an easyJet LGW roster exported from eCrew, with airline, base and timezone all configurable.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Reads your roster</h3>
+        <p>Primary path is an iCal feed (the eCrew calendar export) parsed automatically. Fallback is a manual upload of the eCrew Personal Crew Schedule Report PDF, or any .ics file.</p>
+      </div>
+      <div class="card">
+        <h3>Knows what to show</h3>
+        <p>A state engine picks the display for where you are in your duty cycle.</p>
+        <div class="states">
+          <span class="chip">day off</span><span class="chip">standby</span>
+          <span class="chip">next duty</span><span class="chip">reported</span>
+          <span class="chip">in-flight</span><span class="chip">turnaround</span>
+          <span class="chip">heading home</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Tracks the live flight</h3>
+        <p>While airborne it polls a flight-data provider for the active sector, merging actual off/on times, position and ETA so the wall follows reality, not just the schedule.</p>
+      </div>
+      <div class="card">
+        <h3>Estimates time home</h3>
+        <p>on-chocks &rarr; +30&nbsp;min debrief &rarr; +walk-to-car &rarr; +commute &rarr; home. Commute is a slider, or an optional live Google Maps drive time at debrief o'clock.</p>
+      </div>
+      <div class="card">
+        <h3>Timezone aware</h3>
+        <p>Everything is stored in UTC and shown as UTC, Local Base, or Local Station at the flick of a toggle.</p>
+      </div>
+      <div class="card">
+        <h3>Web control panel</h3>
+        <p>A Flask panel for uploads, sliders, the timezone toggle and a live preview &mdash; including a time-travel field to preview what the wall will show when you land.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Display outputs</h2>
+    <p class="lead">Three outputs, selectable in the panel.</p>
+    <div class="outputs">
+      <div class="card">
+        <h3>Full LED &mdash; 128&times;32</h3>
+        <p>The recommended build (two chained 64&times;32 HUB75 panels). Airborne, it shows a full-width great-circle route arc with a moving aircraft marker; landing and home times sit in the corners.</p>
+      </div>
+      <div class="card">
+        <h3>Compact LED &mdash; 64&times;32</h3>
+        <p>Half the panel, lower cost. Everything still fits, but a 64&#8209;px row holds ~12 characters, so the in-flight view stacks route, progress track and times; long routes scroll.</p>
+      </div>
+      <div class="card">
+        <h3>Vestaboard (split-flap)</h3>
+        <p>A 6&times;22 mechanical grid &mdash; great for the text states, weak for a smooth map. The route reduces to a coarse chip-based progress bar. A <code>VestaboardRenderer</code> is included.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>The wall, rendered</h2>
+    <p class="lead">Simulator previews &mdash; the console/PNG renderer needs no hardware.</p>
+    <div class="shots">
+      <div class="shot">
+        <img src="assets/full_128x32_nextduty.png" alt="LED matrix next-duty view">
+        <p class="cap">Next duty &mdash; flight number, route and report time.</p>
+      </div>
+      <div class="shot">
+        <img src="assets/led_true_resolution.png" alt="True-resolution LED render">
+        <p class="cap">True-resolution LED render.</p>
+      </div>
+      <div class="shot">
+        <img src="assets/mock_1_hub75_64x64.png" alt="HUB75 64x64 panel mockup">
+        <p class="cap">HUB75 panel mockup.</p>
+      </div>
+      <div class="shot">
+        <img src="assets/epaper_2_solari_board.png" alt="Solari split-flap style board concept">
+        <p class="cap">Solari split-flap board concept.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Hardware (suggested)</h2>
+    <table>
+      <tr><th>Part</th><th>Notes</th></tr>
+      <tr><td>Raspberry Pi Zero 2 W (or Pi 4)</td><td>Handles the roster / timezone / state logic comfortably.</td></tr>
+      <tr><td>Adafruit RGB Matrix Bonnet / HAT</td><td>Saves hand-wiring the HUB75 GPIO.</td></tr>
+      <tr><td>2 &times; 64&times;32 HUB75 RGB panels</td><td>Chained to 128&times;32 &mdash; room for text; a single 64&times;32 works with more truncation.</td></tr>
+      <tr><td>5V / 4A+ PSU</td><td>LED panels are hungry &mdash; don't power them from the Pi.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Run the simulator</h2>
+    <p class="lead">No hardware needed &mdash; renders the wall in your browser.</p>
+<pre>python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+python -m flightwall.main            # simulator + web panel on :8080</pre>
+    <p class="lead">Open <code>http://localhost:8080</code>, drop in your roster PDF, and the wall renders live.</p>
+    <div class="note">Live tracking (AeroDataBox, Flightradar24 API, or OpenSky), Google Maps drive time,
+      the physical LED output and the Vestaboard API need your own keys / hardware, so they're
+      written and guarded but tuned on first run. The eCrew PDF parsing, AIMS iCal format, state
+      machine, timezone conversion and home-time maths are verified against real data.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Flight Wall &mdash; roster edition. See <code>README.md</code> and <code>INSTALL_PI.md</code> in the repository for full setup.
+    <br><a class="cta" href="README.md">Read the docs &rarr;</a>
+  </div>
+</footer>
+</body>
+</html>

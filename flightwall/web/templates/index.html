@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight Wall · control</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#121821; --panel2:#0f141c; --line:#1e2730;
+    --text:#e6edf3; --dim:#8b97a5; --faint:#5b6675;
+    --cyan:#39c0ff; --amber:#ffb340; --green:#7ee787; --red:#ff7b72; --violet:#c08cff;
+    --mono:"Roboto Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 64px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:26px}
+  header h1{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:.32em;
+    text-transform:uppercase;margin:0;color:var(--text)}
+  header .meta{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.08em}
+
+  /* hero: framed LED wall */
+  .bezel{background:linear-gradient(#1a222e,#0d121a);border:1px solid var(--line);
+    border-radius:14px;padding:14px;box-shadow:0 1px 0 #2a3543 inset,0 18px 40px -24px #000}
+  .screen{position:relative;border-radius:8px;overflow:hidden;background:#06080c;
+    min-height:90px;display:flex;align-items:center;justify-content:center}
+  .screen.led{aspect-ratio:128/32}
+  .screen img{width:100%;height:auto;display:block}
+  .screen.led img{height:100%;image-rendering:pixelated}
+  .screen .empty{font-family:var(--mono);color:var(--faint);font-size:13px;letter-spacing:.1em}
+  .status{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin-top:14px;font-family:var(--mono);font-size:12.5px;letter-spacing:.06em}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);
+    box-shadow:0 0 10px 1px currentColor;color:var(--cyan)}
+  .status .state{color:var(--text);text-transform:uppercase;letter-spacing:.16em}
+  .status .flags{color:var(--dim)}
+  .status .who{margin-left:auto;color:var(--faint)}
+
+  /* time-travel scrubber */
+  .scrub{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .scrub input[type=datetime-local]{flex:1;min-width:180px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 18px 20px}
+  .card h2{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--dim);margin:0 0 16px}
+  .field{margin-bottom:16px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:6px}
+  label .val{float:right;font-family:var(--mono);color:var(--text)}
+  input[type=range]{width:100%;accent-color:var(--cyan);height:22px}
+  input[type=text],input[type=password],input[type=number],input[type=datetime-local],select{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    font-family:var(--mono);font-size:13px;padding:9px 10px;border-radius:7px}
+  input:focus,select:focus{outline:2px solid var(--cyan);outline-offset:-1px}
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;background:var(--panel2);border:0;color:var(--dim);
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;padding:9px 6px;cursor:pointer}
+  .seg button.on{background:var(--cyan);color:#04161f;font-weight:600}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;padding:10px 14px;
+    border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+  .btn:hover{border-color:var(--cyan)}
+  .btn.primary{background:var(--cyan);color:#04161f;border-color:var(--cyan);font-weight:600}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .drop{border:1px dashed var(--line);border-radius:9px;padding:16px;text-align:center;
+    color:var(--dim);font-size:13px;cursor:pointer;transition:border-color .15s,color .15s}
+  .drop:hover{border-color:var(--cyan);color:var(--text)}
+  .note{font-size:12px;color:var(--faint);margin-top:10px}
+  .toast{font-family:var(--mono);font-size:12px;margin-top:10px;min-height:16px}
+  .toast.ok{color:var(--green)} .toast.err{color:var(--red)}
+  details{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  summary{cursor:pointer;padding:16px 18px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--dim);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  .details-body{padding:18px}
+  .checkrow{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--dim)}
+  .checkrow input{accent-color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Flight&nbsp;Wall</h1>
+    <span class="meta" id="clock">--:--:-- Z</span>
+  </header>
+
+  <!-- HERO: the wall itself -->
+  <div class="bezel">
+    <div class="screen" id="screen"><span class="empty">no signal</span></div>
+  </div>
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span class="state" id="state">—</span>
+    <span class="flags" id="flags"></span>
+    <span class="who" id="who"></span>
+  </div>
+  <div class="scrub">
+    <span>preview&nbsp;at</span>
+    <input type="datetime-local" id="at">
+    <button class="btn" id="live">Live</button>
+  </div>
+
+  <div class="grid">
+    <!-- ROSTER -->
+    <div class="card">
+      <h2>Roster</h2>
+      <div class="field">
+        <div class="drop" id="drop">Drop or choose your eCrew PDF or .ics file</div>
+        <input type="file" id="file" accept=".pdf,.ics,.ical" hidden>
+      </div>
+      <div class="field">
+        <label>Calendar feed (iCal URL)</label>
+        <input type="text" id="ical_url" value="{{ cfg.ical_url }}"
+               placeholder="https://…/basic.ics">
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="fetch">Pull feed now</button>
+          <button class="btn" id="save_url">Save URL</button>
+        </div>
+      </div>
+      <div class="toast" id="rosterMsg"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+      <label style="display:block;margin-bottom:8px">Add a personal flight (non-work)</label>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <input type="text" id="pf_flight" placeholder="Flight no (e.g. U28243)"
+               style="flex:1;min-width:150px">
+        <input type="date" id="pf_date" style="flex:1;min-width:150px">
+        <button class="btn primary" id="pf_add">Add &amp; track</button>
+      </div>
+      <div class="hint" style="color:var(--faint);font-size:12px;margin-top:6px">
+        Looks up the route &amp; times automatically. Report time is set to 90 min before
+        departure for personal trips. (Needs an AeroDataBox key in Advanced.)</div>
+      <div class="toast" id="pfMsg"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
+      <label style="display:block;margin-bottom:8px">Airline logos (for the boarding pass &amp; personal flights)</label>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <input type="text" id="logo_code" placeholder="Airline code (e.g. U2, BA)"
+               style="flex:1;min-width:140px;text-transform:uppercase">
+        <input type="file" id="logo_file" accept=".png,.jpg,.jpeg" style="flex:1;min-width:150px">
+        <button class="btn primary" id="logo_add">Upload logo</button>
+      </div>
+      <div class="hint" style="color:var(--faint);font-size:12px;margin-top:6px">
+        PNG with transparency works best. Use your work airline's code (U2) for the boarding-pass logo.</div>
+      <div class="toast" id="logoMsg"></div>
+    </div>
+
+    <!-- DISPLAY & TIMING -->
+    <div class="card">
+      <h2>Display &amp; timing</h2>
+      <div class="field">
+        <label>Times shown in</label>
+        <div class="seg" id="tz">
+          <button data-v="utc">UTC</button>
+          <button data-v="base">BASE</button>
+          <button data-v="station">STATION</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Debrief after on-chocks <span class="val"><span id="debrief_v">{{ cfg.debrief_minutes }}</span> min</span></label>
+        <input type="range" id="debrief_minutes" min="0" max="60" value="{{ cfg.debrief_minutes }}">
+      </div>
+      <div class="field">
+        <label>Walk to car park <span class="val"><span id="walk_v">{{ cfg.walk_minutes }}</span> min</span></label>
+        <input type="range" id="walk_minutes" min="0" max="30" value="{{ cfg.walk_minutes }}">
+      </div>
+      <div class="field">
+        <label>Commute home <span class="val"><span id="commute_v">{{ cfg.commute_minutes }}</span> min</span></label>
+        <input type="range" id="commute_minutes" min="0" max="180" value="{{ cfg.commute_minutes }}">
+        <div class="checkrow" style="margin-top:10px">
+          <input type="checkbox" id="use_maps_commute" {% if cfg.use_maps_commute %}checked{% endif %}>
+          <label for="use_maps_commute" style="margin:0">Use live Google Maps drive time</label>
+          <button class="btn" id="calc" style="margin-left:auto;padding:6px 10px">Recalc</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADVANCED -->
+  <details>
+    <summary>Airline · tracking · maps · hardware</summary>
+    <div class="details-body">
+      <div class="grid" style="margin-top:0">
+        <div>
+          <div class="field">
+            <label>Airline code (IATA / ICAO)</label>
+            <div class="row">
+              <input type="text" id="airline_iata" value="{{ cfg.airline_iata }}" style="flex:1">
+              <input type="text" id="airline_icao" value="{{ cfg.airline_icao }}" style="flex:1">
+            </div>
+          </div>
+          <div class="field">
+            <label>Shown on wall as (flight prefix)</label>
+            <input type="text" id="display_prefix" value="{{ cfg.display_prefix }}" placeholder="EZY">
+          </div>
+          <div class="field">
+            <label>Home base (IATA)</label>
+            <input type="text" id="base" value="{{ cfg.base }}">
+          </div>
+          <div class="field">
+            <label>Live tracking</label>
+            <select id="tracker">
+              <option value="aerodatabox" {% if cfg.tracker=='aerodatabox' %}selected{% endif %}>AeroDataBox (ETA by flight no.)</option>
+              <option value="fr24" {% if cfg.tracker=='fr24' %}selected{% endif %}>Flightradar24 API (live position)</option>
+              <option value="opensky" {% if cfg.tracker=='opensky' %}selected{% endif %}>OpenSky (free, position)</option>
+              <option value="none" {% if cfg.tracker=='none' %}selected{% endif %}>None (schedule only)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>AeroDataBox / RapidAPI key</label>
+            <input type="password" id="aerodatabox_key" value="{{ cfg.aerodatabox_key }}" placeholder="optional">
+          </div>
+          <div class="field">
+            <label>Flightradar24 API token</label>
+            <input type="password" id="fr24_api_token" value="{{ cfg.fr24_api_token }}" placeholder="optional · fr24api.flightradar24.com">
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>Home location (lat, lng)</label>
+            <div class="row">
+              <input type="number" step="any" id="home_lat" value="{{ cfg.home_lat or '' }}" placeholder="51.49" style="flex:1">
+              <input type="number" step="any" id="home_lng" value="{{ cfg.home_lng or '' }}" placeholder="-0.59" style="flex:1">
+            </div>
+          </div>
+          <div class="field">
+            <label>Car park at base (lat, lng)</label>
+            <div class="row">
+              <input type="number" step="any" id="base_lat" value="{{ cfg.base_lat or '' }}" placeholder="51.15" style="flex:1">
+              <input type="number" step="any" id="base_lng" value="{{ cfg.base_lng or '' }}" placeholder="-0.18" style="flex:1">
+            </div>
+          </div>
+          <div class="field">
+            <label>Google Maps API key</label>
+            <input type="password" id="google_maps_api_key" value="{{ cfg.google_maps_api_key }}" placeholder="optional">
+          </div>
+          <div class="field">
+            <label>Output</label>
+            <select id="renderer">
+              <option value="simulator" {% if cfg.renderer=='simulator' %}selected{% endif %}>Simulator (preview only)</option>
+              <option value="matrix" {% if cfg.renderer=='matrix' %}selected{% endif %}>LED matrix (on the Pi)</option>
+              <option value="epaper" {% if cfg.renderer=='epaper' %}selected{% endif %}>E-paper (Inky Impression)</option>
+              <option value="vestaboard" {% if cfg.renderer=='vestaboard' %}selected{% endif %}>Vestaboard (split-flap)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>E-paper style</label>
+            <select id="epaper_style">
+              {% for key,label in epaper_styles %}
+              <option value="{{ key }}" {% if cfg.epaper_style==key %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="hint" style="color:var(--faint);font-size:12px;margin:6px 0">
+              Tap a preview to choose a style:</div>
+            <div id="styleGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+              {% for key,label in epaper_styles %}
+              <div class="styleTile" data-style="{{ key }}" title="{{ label }}"
+                   style="cursor:pointer;border:2px solid {% if cfg.epaper_style==key %}var(--cyan){% else %}var(--line){% endif %};border-radius:8px;overflow:hidden;background:#06080c">
+                <img data-style-img="{{ key }}" alt="{{ label }}" style="width:100%;height:auto;display:block">
+                <div style="font-size:11px;padding:4px 6px;color:var(--faint)">{{ label }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="field">
+            <label>Layout (LED)</label>
+            <select id="layout">
+              <option value="full" {% if cfg.layout=='full' %}selected{% endif %}>Full — 128×32 (route map)</option>
+              <option value="compact" {% if cfg.layout=='compact' %}selected{% endif %}>Compact — 64×32</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Vestaboard Read/Write key</label>
+            <input type="password" id="vestaboard_rw_key" value="{{ cfg.vestaboard_rw_key }}" placeholder="optional">
+          </div>
+        </div>
+      </div>
+      <button class="btn primary" id="saveAdv">Save settings</button>
+      <div class="toast" id="advMsg"></div>
+    </div>
+  </details>
+
+  <p class="note">Times follow your roster (Local Base) unless you switch the zone above.
+    The home estimate chains on-chocks → debrief → walk → commute (personal flights:
+    on-chocks → drive to base → commute). <span style="opacity:.6">Flight Wall v{{ version }}</span></p>
+
+  <details style="margin-top:20px">
+    <summary style="cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:13px">
+      All settings (config.json) — advanced</summary>
+    <div class="card" style="margin-top:10px">
+      <p class="hint" style="color:var(--faint);font-size:12px;margin:0 0 8px">
+        Every setting, editable directly. Edit the JSON and Save. Invalid keys are ignored.</p>
+      <textarea id="rawCfg" spellcheck="false"
+        style="width:100%;min-height:320px;font-family:var(--mono);font-size:12px;
+               background:#06080c;color:#cfe;border:1px solid var(--line);border-radius:8px;padding:10px"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="rawReload">Reload</button>
+        <button class="btn primary" id="rawSave">Save all settings</button>
+      </div>
+      <div class="toast" id="rawMsg"></div>
+    </div>
+  </details>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let overrideAt = null;
+
+const TZBTNS = [...document.querySelectorAll('#tz button')];
+let tzMode = "{{ cfg.tz_mode }}";
+function paintTz(){ TZBTNS.forEach(b=>b.classList.toggle('on', b.dataset.v===tzMode)); }
+TZBTNS.forEach(b=>b.onclick=()=>{ tzMode=b.dataset.v; paintTz(); saveCfg({tz_mode:tzMode}); refresh(); });
+paintTz();
+
+async function saveCfg(patch){
+  await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(patch)});
+}
+
+// sliders
+[['debrief_minutes','debrief_v'],['walk_minutes','walk_v'],['commute_minutes','commute_v']]
+.forEach(([id,vid])=>{
+  const el=$('#'+id);
+  el.addEventListener('input',()=>{ $('#'+vid).textContent=el.value; });
+  el.addEventListener('change',()=>{ saveCfg({[id]:el.value}); refresh(); });
+});
+$('#use_maps_commute').addEventListener('change',e=>{ saveCfg({use_maps_commute:e.target.checked}); refresh(); });
+
+// time travel
+$('#at').addEventListener('change',e=>{ overrideAt = e.target.value ? e.target.value : null; refresh(); });
+$('#live').onclick=()=>{ overrideAt=null; $('#at').value=''; refresh(); };
+
+// upload
+const drop=$('#drop'), file=$('#file');
+drop.onclick=()=>file.click();
+file.onchange=()=>file.files[0]&&upload(file.files[0]);
+['dragover','dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();
+  drop.style.borderColor = ev==='dragover' ? 'var(--cyan)' : '';
+  if(ev==='drop'&&e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]);}));
+async function upload(f){
+  const fd=new FormData(); fd.append('roster',f);
+  msg('#rosterMsg','Reading '+f.name+'…');
+  const r=await fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>({ok:false,error:'upload failed'}));
+  if(r.ok){ msg('#rosterMsg',`Loaded ${r.duties} duties${r.crew?' · '+r.crew:''}`,'ok'); refresh(); }
+  else msg('#rosterMsg',r.error||'Could not read that file','err');
+}
+
+$('#fetch').onclick=async()=>{ await saveCfg({ical_url:$('#ical_url').value});
+  msg('#rosterMsg','Pulling feed…');
+  const r=await fetch('/api/fetch_ical',{method:'POST'}).then(r=>r.json()).catch(()=>({ok:false,error:'fetch failed'}));
+  r.ok?(msg('#rosterMsg',`Loaded ${r.duties} duties from feed`,'ok'),refresh()):msg('#rosterMsg',r.error,'err'); };
+$('#save_url').onclick=async()=>{ await saveCfg({ical_url:$('#ical_url').value}); msg('#rosterMsg','Feed URL saved','ok'); };
+
+$('#calc').onclick=async()=>{ await saveAdv(true);
+  const r=await fetch('/api/commute',{method:'POST'}).then(r=>r.json()).catch(()=>({ok:false,error:'failed'}));
+  r.ok?(msg('#advMsg',`Drive time ≈ ${r.minutes} min`,'ok'),refresh()):msg('#advMsg',r.error,'err'); };
+
+async function saveAdv(silent){
+  const ids=['airline_iata','airline_icao','display_prefix','base','tracker',
+    'aerodatabox_key','fr24_api_token','renderer','layout','epaper_style','vestaboard_rw_key',
+    'home_lat','home_lng','base_lat','base_lng','google_maps_api_key'];
+  const patch={use_maps_commute:$('#use_maps_commute').checked};
+  ids.forEach(id=>patch[id]=$('#'+id).value);
+  await saveCfg(patch);
+  if(!silent){ msg('#advMsg','Settings saved','ok'); refresh(); }
+}
+$('#saveAdv').onclick=()=>saveAdv(false);
+
+$('#logo_add').onclick=async()=>{
+  const code=$('#logo_code').value.trim().toUpperCase(), f=$('#logo_file').files[0];
+  if(!code||!f){ msg('#logoMsg','Enter an airline code and choose an image','err'); return; }
+  const fd=new FormData(); fd.append('code',code); fd.append('logo',f);
+  msg('#logoMsg','Uploading…');
+  const r=await fetch('/api/upload_logo',{method:'POST',body:fd}).then(r=>r.json())
+    .catch(()=>({ok:false,message:'upload failed'}));
+  msg('#logoMsg',r.message||(r.ok?'Saved':'Failed'),r.ok?'ok':'err');
+  if(r.ok){ refresh(); loadStyleThumbs(); }
+};
+
+$('#pf_add').onclick=async()=>{
+  const flight_no=$('#pf_flight').value.trim(), date=$('#pf_date').value;
+  if(!flight_no||!date){ msg('#pfMsg','Enter a flight number and date','err'); return; }
+  msg('#pfMsg','Looking up flight…');
+  const r=await fetch('/api/add_flight',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({flight_no,date})}).then(r=>r.json())
+    .catch(()=>({ok:false,message:'request failed'}));
+  msg('#pfMsg',r.message||(r.ok?'Added':'Failed'),r.ok?'ok':'err');
+  if(r.ok) refresh();
+};
+
+function msg(sel,text,kind){ const e=$(sel); e.textContent=text; e.className='toast'+(kind?' '+kind:''); }
+
+// ---- visual style picker ----
+async function loadStyleThumbs(){
+  const tiles=[...document.querySelectorAll('[data-style-img]')];
+  for(const img of tiles){
+    const st=img.getAttribute('data-style-img');
+    try{ img.src=await fetch('/api/style_preview?style='+encodeURIComponent(st)
+        +(overrideAt?('&at='+encodeURIComponent(new Date(overrideAt).toISOString())):''))
+        .then(r=>r.text()); }catch{}
+  }
+}
+function markStyle(sel){
+  document.querySelectorAll('.styleTile').forEach(t=>{
+    t.style.borderColor = (t.dataset.style===sel)?'var(--cyan)':'var(--line)'; });
+}
+document.querySelectorAll('.styleTile').forEach(t=>t.onclick=async()=>{
+  const st=t.dataset.style;
+  if($('#epaper_style')) $('#epaper_style').value=st;
+  markStyle(st); await saveCfg({epaper_style:st}); refresh();
+});
+if($('#epaper_style')) $('#epaper_style').onchange=e=>{ markStyle(e.target.value); saveCfg({epaper_style:e.target.value}); refresh(); };
+
+// ---- raw config editor ----
+async function rawLoad(){
+  try{ const c=await fetch('/api/config_raw').then(r=>r.json());
+    $('#rawCfg').value=JSON.stringify(c,null,2); }catch{ msg('#rawMsg','load failed','err'); }
+}
+if($('#rawReload')) $('#rawReload').onclick=rawLoad;
+if($('#rawSave')) $('#rawSave').onclick=async()=>{
+  let obj; try{ obj=JSON.parse($('#rawCfg').value); }
+  catch(e){ msg('#rawMsg','Not valid JSON: '+e.message,'err'); return; }
+  const r=await fetch('/api/config_raw',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(obj)}).then(r=>r.json()).catch(()=>({ok:false}));
+  msg('#rawMsg', r.ok?('Saved '+r.applied.length+' settings'):'Save failed', r.ok?'ok':'err');
+  if(r.ok){ rawLoad(); refresh(); }
+};
+rawLoad(); loadStyleThumbs();
+
+async function refresh(){
+  const url='/api/state'+(overrideAt?('?at='+encodeURIComponent(new Date(overrideAt).toISOString())):'');
+  let d; try{ d=await fetch(url).then(r=>r.json()); }catch{ return; }
+  const scr=$('#screen');
+  const rend=($('#renderer')&&$('#renderer').value)||'{{ cfg.renderer }}';
+  scr.className='screen'+((rend==='epaper'||rend==='vestaboard')?'':' led');
+  if(d.png){ scr.innerHTML='<img src="'+d.png+'" alt="wall">'; }
+  else scr.innerHTML='<span class="empty">no signal</span>';
+  $('#state').textContent=(d.state||'—').replace(/_/g,' ');
+  $('#flags').textContent=(d.flags||[]).filter(Boolean).join('  ·  ');
+  $('#who').textContent=d.crew?(d.crew+' · '+d.base+' · '+d.duties+' duties'):(d.duties+' duties');
+  const dot=$('#dot'); dot.style.color=d.accent||'#39c0ff';
+}
+function tick(){ const n=new Date();
+  $('#clock').textContent=n.toISOString().substr(11,8)+' Z'; }
+setInterval(tick,1000); tick();
+setInterval(refresh,5000); refresh();
+</script>
+</body>
+</html>

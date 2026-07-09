@@ -1,0 +1,13 @@
+# Core
+pdfplumber>=0.11        # eCrew PDF roster parsing (manual-upload path)
+icalendar>=5.0          # iCal feed parsing (primary path)
+airportsdata>=2024.0    # offline IATA -> timezone / coordinates
+Flask>=3.0              # web control panel
+requests>=2.31          # flight tracking + iCal fetch + Google Maps
+Pillow>=10.0            # LED-wall preview image for the web UI
+
+# LED matrix output is NOT pip-installable. Build hzeller's library on the Pi:
+#   git clone https://github.com/hzeller/rpi-rgb-led-matrix
+#   cd rpi-rgb-led-matrix && make build-python PYTHON=$(which python3)
+#   sudo make install-python PYTHON=$(which python3)
+# The 'simulator' renderer runs everywhere with no extra hardware deps.

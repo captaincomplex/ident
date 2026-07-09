@@ -1,0 +1,4 @@
+# Extra packages for the Inky Impression e-paper output (install on the Pi only).
+inky          # Pimoroni Inky Impression driver (auto-detects the panel)
+qrcode        # boarding-pass QR code generation
+# 'inky' pulls in numpy, spidev, gpiod/RPi.GPIO, smbus2 as needed.
