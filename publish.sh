@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publish this project to GitHub and enable GitHub Pages (serves /docs on master).
+# Publish this project to GitHub and enable GitHub Pages (serves /docs on the current branch).
 # Safe to re-run: if the repo or Pages site already exists it just reports and moves on.
 set -uo pipefail
 REPO="flightwall"
@@ -15,25 +15,26 @@ gh auth status >/dev/null 2>&1 || { echo "ERROR: not logged in. Run: gh auth log
 # 3) init + commit if needed
 if [ ! -d .git ]; then
   git init -q
-  git branch -M master
+  git branch -M main
 fi
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 git add -A
 git diff --cached --quiet || git commit -q -m "Publish $REPO site" || true
 
 # 4) create the GitHub repo + push (skip create if it already exists)
 if gh repo view "$REPO" >/dev/null 2>&1; then
-  echo "Repo $REPO already exists on GitHub — pushing current master."
+  echo "Repo $REPO already exists on GitHub — pushing current $BRANCH."
   git remote get-url origin >/dev/null 2>&1 || gh repo view "$REPO" --json url -q .url | xargs -I{} git remote add origin {}.git
-  git push -u origin master
+  git push -u origin "$BRANCH"
 else
   gh repo create "$REPO" --public --source=. --remote=origin --push
 fi
 
-# 5) enable GitHub Pages on /docs @ master (ignore error if already enabled)
+# 5) enable GitHub Pages on /docs @ $BRANCH (ignore error if already enabled)
 OWNER="$(gh api user -q .login)"
 gh api -X POST "repos/$OWNER/$REPO/pages" \
-  -f "source[branch]=master" -f "source[path]=/docs" >/dev/null 2>&1 \
+  -f "source[branch]=$BRANCH" -f "source[path]=/docs" >/dev/null 2>&1 \
   && echo "Pages enabled." \
-  || echo "Pages already enabled (or enable manually: Settings -> Pages -> master /docs)."
+  || echo "Pages already enabled (or enable manually: Settings -> Pages -> $BRANCH /docs)."
 
 echo "Done. Site: https://$OWNER.github.io/$REPO/"
