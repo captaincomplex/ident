@@ -27,6 +27,12 @@ class Config:
 
     # Roster source
     ical_url: str = ""
+    ical_refresh_minutes: int = 30    # auto-refresh the iCal feed every N minutes (0 = off)
+
+    # Web panel login (blank password = no login required)
+    auth_user: str = "pilot"
+    auth_password_hash: str = ""      # set via the panel or --set-password
+    auth_trust_lan: bool = False      # if True, skip the login for local-network clients
 
     # Home-time chain (minutes)
     debrief_minutes: int = 30
@@ -100,6 +106,29 @@ def load_roster() -> Roster:
         with open(ROSTER_PATH) as f:
             return roster_from_dict(json.load(f))
     return Roster()
+
+
+def refresh_from_ical(cfg: "Config" = None):
+    """Fetch the configured iCal feed, parse and store it.
+
+    Returns the number of duties stored, or None if no iCal URL is set.
+    Raises on network/parse errors so callers can report them.
+    """
+    import requests
+    from .parsers.ical_parser import parse_ical
+    cfg = cfg or Config.load()
+    if not cfg.ical_url:
+        return None
+    resp = requests.get(cfg.ical_url, timeout=20)
+    resp.raise_for_status()
+    roster = parse_ical(resp.content, base_iata=cfg.base,
+                        duty_gap_hours=cfg.duty_gap_hours,
+                        report_lead_min=cfg.report_lead_min,
+                        debrief_minutes=cfg.debrief_minutes)
+    if not roster.base:
+        roster.base = cfg.base
+    save_roster(normalize_reports(roster, cfg))
+    return len(roster.duties)
 
 
 _TRANSFER_CACHE: dict = {}

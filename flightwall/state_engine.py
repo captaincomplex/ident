@@ -39,6 +39,7 @@ class ViewModel:
     active_sector: Optional[Sector] = None
     return_sector: Optional[Sector] = None         # other sector(s) same duty
     next_sector: Optional[Sector] = None           # for turnaround
+    next_duty: Optional[Duty] = None               # soonest real duty (day-off board)
     home: Optional[HomeEstimate] = None
     countdown_to: Optional[dt.datetime] = None      # report / STD to count down to
     countdown_label: str = ""
@@ -61,10 +62,12 @@ def compute_view(roster: Roster, now: dt.datetime, *, debrief_minutes: int = 30,
         return ViewModel(state=DutyState.NO_ROSTER, now=now, base=roster.base)
 
     vm = ViewModel(state=DutyState.BETWEEN_DUTIES, now=now, base=roster.base, duty=duty)
+    vm.next_duty = _next_real_duty(roster, now)
 
     # Non-flying duties.
     if duty.duty_type == DutyType.DAY_OFF:
         vm.state = DutyState.DAY_OFF
+        vm.next_duty = _next_real_duty(roster, now)
         return vm
     if duty.duty_type == DutyType.STANDBY:
         if duty.standby_start and duty.standby_start <= now <= (duty.standby_end or now):
@@ -139,6 +142,13 @@ def _current_or_next_duty(roster: Roster, now: dt.datetime) -> Optional[Duty]:
         return min(upcoming, key=lambda d: _duty_window(d)[0])
     today = [d for d in duties if d.date == now.date()]
     return today[-1] if today else (duties[-1] if duties else None)
+
+
+def _next_real_duty(roster: Roster, now: dt.datetime) -> Optional[Duty]:
+    """Soonest upcoming duty that isn't a day off (for the day-off board)."""
+    upcoming = [d for d in roster.sorted_duties()
+                if d.duty_type != DutyType.DAY_OFF and _duty_window(d)[0] > now]
+    return min(upcoming, key=lambda d: _duty_window(d)[0]) if upcoming else None
 
 
 def _duty_window(d: Duty) -> tuple[dt.datetime, dt.datetime]:

@@ -18,7 +18,8 @@ import datetime as dt
 import os
 import tempfile
 
-from flask import Flask, jsonify, render_template, request
+from flask import (Flask, jsonify, redirect, render_template,
+                   render_template_string, request, session, url_for)
 
 from ..config import (Config, build_tracker, load_roster, save_roster, normalize_reports)
 from ..parsers.ecrew_pdf import parse_pdf
@@ -31,8 +32,85 @@ from ..tracking.base import update_active_sector
 _runtime = {"maps_commute_minutes": None}
 
 
+LOGIN_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Flight Wall - sign in</title>
+<style>
+ body{background:#16181c;color:#e8e6de;font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+      display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+ form{background:#20232a;padding:28px;border-radius:14px;width:300px;box-shadow:0 8px 30px #0008}
+ h1{font-size:19px;margin:0 0 4px} p.sub{color:#9aa0aa;font-size:13px;margin:0 0 18px}
+ label{display:block;font-size:12px;color:#9aa0aa;margin:12px 0 4px;letter-spacing:.04em}
+ input{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#15171b;
+       color:#e8e6de;font-size:16px;box-sizing:border-box}
+ button{width:100%;margin-top:18px;padding:11px;border:0;border-radius:8px;
+        background:#ca7034;color:#fff;font-size:15px;font-weight:600}
+ .err{background:#4a2020;color:#ffb3b3;padding:9px;border-radius:8px;font-size:13px;margin-top:14px}
+</style>
+<form method=post><h1>Flight Wall</h1><p class=sub>Sign in to the control panel</p>
+<label>USERNAME</label><input name=username autocomplete=username autocapitalize=none autofocus>
+<label>PASSWORD</label><input name=password type=password autocomplete=current-password>
+<button type=submit>Sign in</button>
+{% if error %}<div class=err>{{ error }}</div>{% endif %}</form>"""
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
+
+    from .. import auth as _auth
+    app.secret_key = _auth.secret_key()
+
+    @app.before_request
+    def _require_login():
+        cfg = Config.load()
+        if not _auth.is_enabled(cfg):
+            return None                                  # no password set: open
+        if request.endpoint in ("login", "static"):
+            return None
+        if session.get("fw_auth") is True:
+            return None
+        if getattr(cfg, "auth_trust_lan", False) and \
+           _auth.is_private_address(request.remote_addr):
+            return None
+        if request.path.startswith("/api/"):
+            return jsonify({"ok": False, "error": "Login required"}), 401
+        return redirect(url_for("login", next=request.path))
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        cfg = Config.load()
+        if not _auth.is_enabled(cfg):
+            return redirect(url_for("index"))
+        error = None
+        if request.method == "POST":
+            if _auth.check(cfg, request.form.get("username", ""),
+                           request.form.get("password", "")):
+                session["fw_auth"] = True
+                session.permanent = True
+                nxt = request.args.get("next") or url_for("index")
+                return redirect(nxt if nxt.startswith("/") else url_for("index"))
+            error = "Incorrect username or password."
+        return render_template_string(LOGIN_PAGE, error=error), (401 if error else 200)
+
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("login"))
+
+    @app.route("/api/set_password", methods=["POST"])
+    def api_set_password():
+        cfg = Config.load()
+        form = request.get_json(force=True, silent=True) or request.form
+        new = (form.get("password") or "").strip()
+        user = (form.get("username") or cfg.auth_user or "pilot").strip()
+        if _auth.is_enabled(cfg) and not session.get("fw_auth"):
+            return jsonify({"ok": False, "error": "Sign in first"}), 401
+        if new and len(new) < 6:
+            return jsonify({"ok": False, "error": "Use at least 6 characters"}), 400
+        cfg.auth_user = user
+        cfg.auth_password_hash = _auth.hash_password(new) if new else ""
+        cfg.save()
+        session["fw_auth"] = bool(new)
+        return jsonify({"ok": True, "enabled": bool(new), "username": user})
 
     @app.route("/")
     def index():
@@ -147,16 +225,9 @@ def create_app() -> Flask:
         if not cfg.ical_url:
             return jsonify({"ok": False, "error": "No iCal URL set"}), 400
         try:
-            resp = requests.get(cfg.ical_url, timeout=20)
-            resp.raise_for_status()
-            roster = parse_ical(resp.content, base_iata=cfg.base,
-                                duty_gap_hours=cfg.duty_gap_hours,
-                                report_lead_min=cfg.report_lead_min,
-                                debrief_minutes=cfg.debrief_minutes)
-            if not roster.base:
-                roster.base = cfg.base
-            save_roster(normalize_reports(roster, cfg))
-            return jsonify({"ok": True, "duties": len(roster.duties)})
+            from ..config import refresh_from_ical
+            n = refresh_from_ical(cfg)
+            return jsonify({"ok": True, "duties": n})
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -198,6 +269,31 @@ def create_app() -> Flask:
                 pass
         cfg.save()
         return jsonify({"ok": True, "applied": applied})
+
+    @app.route("/api/wifi", methods=["GET"])
+    def api_wifi_list():
+        from ..wifi import list_saved, current_ssid
+        return jsonify({"saved": list_saved(), "current": current_ssid()})
+
+    @app.route("/api/wifi/scan")
+    def api_wifi_scan():
+        from ..wifi import scan
+        return jsonify({"visible": scan()})
+
+    @app.route("/api/wifi", methods=["POST"])
+    def api_wifi_add():
+        from ..wifi import add, connect_now
+        d = request.get_json(force=True, silent=True) or {}
+        fn = connect_now if d.get("connect") else add
+        ok, msg = fn((d.get("ssid") or "").strip(), d.get("password") or "")
+        return jsonify({"ok": ok, "message": msg}), (200 if ok else 400)
+
+    @app.route("/api/wifi/delete", methods=["POST"])
+    def api_wifi_delete():
+        from ..wifi import remove
+        d = request.get_json(force=True, silent=True) or {}
+        ok, msg = remove((d.get("name") or "").strip())
+        return jsonify({"ok": ok, "message": msg}), (200 if ok else 400)
 
     @app.route("/api/upload_logo", methods=["POST"])
     def api_upload_logo():

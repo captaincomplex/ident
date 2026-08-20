@@ -34,6 +34,7 @@ _RE_CREWLINE = re.compile(r"^([A-Z]{3})-([A-Z]{2,3})-(\d{2,4})$")
 
 _CODE_MAP = {
     "D/O": DutyType.DAY_OFF, "DO": DutyType.DAY_OFF, "OFF": DutyType.DAY_OFF,
+    "WFTU": DutyType.DAY_OFF,   # work-free time unit: counts as a day off
     "PSBE": DutyType.STANDBY, "ESBY": DutyType.STANDBY, "LSBY": DutyType.STANDBY,
     "ASBY": DutyType.STANDBY, "HSBY": DutyType.STANDBY, "STBY": DutyType.STANDBY,
     "FTGD": DutyType.TRAINING, "SIM": DutyType.TRAINING, "GS": DutyType.TRAINING,

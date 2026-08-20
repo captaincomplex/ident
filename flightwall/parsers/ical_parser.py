@@ -39,7 +39,7 @@ _RE_ROUTE = re.compile(r"\b([A-Z]{3})\s*[-/>\u2192]+\s*([A-Z]{3})\b")
 _KW_STANDBY = ("standby", "stand by", "sby", "esby", "psbe", "lsby", "asby",
                "hsby", "reserve", "airport standby", "home standby")
 _KW_OFF = ("day off", "day-off", "d/o", "rest day", "off duty", "annual leave",
-           "leave")
+           "leave", "wftu")
 _KW_TRAINING = ("training", "sim", "ground school", "recurrent", "ftgd", "ojt",
                 "ground duty")
 

@@ -154,6 +154,30 @@
       <div class="toast" id="logoMsg"></div>
     </div>
 
+    <!-- WI-FI -->
+    <div class="card">
+      <h2>Wi-Fi networks</h2>
+      <p class="hint" style="color:var(--faint);font-size:12px;margin:0 0 10px">
+        Pre-load networks you'll travel to (crashpad, hotel, family). The Pi joins any
+        saved network automatically when it's in range — add them here while you're on
+        a network that works, and you won't need to fiddle when you arrive.</p>
+      <div id="wifiList" style="margin-bottom:12px"></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <input type="text" id="wifi_ssid" placeholder="Network name (SSID)"
+               style="flex:1;min-width:150px">
+        <input type="password" id="wifi_pass" placeholder="Password"
+               style="flex:1;min-width:150px">
+      </div>
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" id="wifi_add">Save network</button>
+        <button class="btn" id="wifi_scan">Scan nearby</button>
+      </div>
+      <div class="hint" style="color:var(--faint);font-size:12px;margin-top:6px">
+        Saved networks must be 2.4GHz (Pi Zero 2 W can't see 5GHz). Saving doesn't
+        disturb your current connection.</div>
+      <div class="toast" id="wifiMsg"></div>
+    </div>
+
     <!-- DISPLAY & TIMING -->
     <div class="card">
       <h2>Display &amp; timing</h2>
@@ -375,6 +399,43 @@ async function saveAdv(silent){
 }
 $('#saveAdv').onclick=()=>saveAdv(false);
 
+async function loadWifi(){
+  try{
+    const w=await fetch('/api/wifi').then(r=>r.json());
+    const box=$('#wifiList');
+    if(!w.saved||!w.saved.length){ box.innerHTML='<div class="hint" style="color:var(--faint);font-size:12px">No saved networks yet.</div>'; return; }
+    box.innerHTML=w.saved.map(n=>{
+      const here=(n===w.current)?' <span style="color:var(--cyan)">• connected</span>':'';
+      return '<div class="row" style="justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">'
+        +'<span style="font-family:var(--mono);font-size:13px">'+n.replace(/</g,'&lt;')+here+'</span>'
+        +'<button class="btn" data-wifi-del="'+encodeURIComponent(n)+'" style="padding:4px 10px;font-size:12px">Remove</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-wifi-del]').forEach(b=>b.onclick=async()=>{
+      const name=decodeURIComponent(b.getAttribute('data-wifi-del'));
+      if(!confirm('Remove network "'+name+'"?')) return;
+      const r=await fetch('/api/wifi/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name})}).then(r=>r.json()).catch(()=>({ok:false,message:'failed'}));
+      msg('#wifiMsg',r.message,r.ok?'ok':'err'); loadWifi();
+    });
+  }catch{ $('#wifiList').innerHTML='<div class="hint" style="color:var(--faint);font-size:12px">Wi-Fi control unavailable on this device.</div>'; }
+}
+if($('#wifi_add')) $('#wifi_add').onclick=async()=>{
+  const ssid=$('#wifi_ssid').value.trim(), password=$('#wifi_pass').value;
+  if(!ssid){ msg('#wifiMsg','Enter a network name','err'); return; }
+  msg('#wifiMsg','Saving…');
+  const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ssid,password})}).then(r=>r.json()).catch(()=>({ok:false,message:'failed'}));
+  msg('#wifiMsg',r.message,r.ok?'ok':'err');
+  if(r.ok){ $('#wifi_ssid').value=''; $('#wifi_pass').value=''; loadWifi(); }
+};
+if($('#wifi_scan')) $('#wifi_scan').onclick=async()=>{
+  msg('#wifiMsg','Scanning…');
+  const r=await fetch('/api/wifi/scan').then(r=>r.json()).catch(()=>({visible:[]}));
+  if(r.visible&&r.visible.length){ $('#wifi_ssid').value=r.visible[0];
+    msg('#wifiMsg','Nearby: '+r.visible.slice(0,6).join(', ')); }
+  else msg('#wifiMsg','No networks found (or scanning needs permission)','err');
+};
+
 $('#logo_add').onclick=async()=>{
   const code=$('#logo_code').value.trim().toUpperCase(), f=$('#logo_file').files[0];
   if(!code||!f){ msg('#logoMsg','Enter an airline code and choose an image','err'); return; }
@@ -435,7 +496,7 @@ if($('#rawSave')) $('#rawSave').onclick=async()=>{
   msg('#rawMsg', r.ok?('Saved '+r.applied.length+' settings'):'Save failed', r.ok?'ok':'err');
   if(r.ok){ rawLoad(); refresh(); }
 };
-rawLoad(); loadStyleThumbs();
+rawLoad(); loadStyleThumbs(); loadWifi();
 
 async function refresh(){
   const url='/api/state'+(overrideAt?('?at='+encodeURIComponent(new Date(overrideAt).toISOString())):'');

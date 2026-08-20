@@ -147,3 +147,18 @@ on your phone. No monitor ever required.
 - **Permission errors on SPI/GPIO:** the default user is already in the `spi`, `gpio` and `i2c` groups; if you made a different user, add them with `sudo usermod -aG spi,gpio,i2c pilot` then reboot.
 - **Roster won't parse from the feed:** upload the eCrew PDF in the web panel instead — that path is fully tested.
 - **Change the look any time:** web panel → *Advanced → E-paper style*.
+
+### Managing Wi-Fi from the web page (optional)
+
+The web panel can save extra Wi-Fi networks (handy for pre-loading a crashpad or
+hotel network before you travel, so the Pi joins it automatically when you arrive).
+Saving a system Wi-Fi network needs admin rights, so grant the app permission once:
+
+```
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/nmcli" | sudo tee /etc/sudoers.d/flightwall-nmcli
+sudo systemctl restart flightwall
+```
+
+After that, the **Wi-Fi networks** card on the web page can add, list, and remove
+networks. (Without this rule the card still shows, but saving returns a permission
+message.) Networks must be 2.4GHz — the Pi Zero 2 W can't see 5GHz.

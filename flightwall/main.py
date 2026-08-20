@@ -37,16 +37,32 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
     cfg = Config.load()
     renderer = build_renderer(cfg)
     tracker = build_tracker(cfg)
+    try:
+        from . import geo
+        threading.Thread(target=geo.prefetch, daemon=True).start()
+    except Exception:
+        pass
     if enable_web:
         _start_web(port)
         print(f"[flightwall] control panel on http://0.0.0.0:{port}")
 
     last_poll = 0.0
+    last_ical = 0.0
     maps_commute = None
     from . import __version__
     print(f"[flightwall] v{__version__} started · output={cfg.renderer} · tracker={cfg.tracker}")
     while True:
         cfg = Config.load()                      # pick up web edits live
+        if cfg.ical_url and cfg.ical_refresh_minutes and \
+           (time.time() - last_ical >= cfg.ical_refresh_minutes * 60):
+            try:
+                from .config import refresh_from_ical
+                n = refresh_from_ical(cfg)
+                if n is not None:
+                    print(f"[flightwall] iCal auto-refresh: {n} duties")
+            except Exception as e:
+                print(f"[flightwall] iCal refresh error: {e}")
+            last_ical = time.time()
         roster = load_roster()
         now = dt.datetime.now(dt.timezone.utc)
 
@@ -103,7 +119,22 @@ def main():
     ap.add_argument("--no-web", action="store_true", help="disable the web panel")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--tick", type=int, default=30, help="render interval seconds")
+    ap.add_argument("--set-password", action="store_true",
+                    help="set (or clear) the web panel login, then exit")
     args = ap.parse_args()
+    if args.set_password:
+        import getpass
+        from .auth import hash_password
+        cfg = Config.load()
+        user = input(f"Username [{cfg.auth_user or 'pilot'}]: ").strip() or (cfg.auth_user or "pilot")
+        pw = getpass.getpass("Password (blank to disable login): ")
+        if pw and pw != getpass.getpass("Confirm password: "):
+            print("Passwords did not match."); return
+        cfg.auth_user = user
+        cfg.auth_password_hash = hash_password(pw) if pw else ""
+        cfg.save()
+        print(f"Login {'enabled for user ' + user if pw else 'disabled'}.")
+        return
     try:
         run(enable_web=not args.no_web, port=args.port, tick_seconds=args.tick)
     except KeyboardInterrupt:

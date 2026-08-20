@@ -9,7 +9,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ..models import DutyState
+from ..models import DutyState, DutyType
 from ..state_engine import ViewModel
 from ..timezones import hhmm, tz_suffix
 
@@ -77,7 +77,7 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
         "report": _disp(_duty.report) if (_duty and _duty.report) else "",
         "date": _duty.date.strftime("%a %d %b").upper() if _duty else "",
         "prog": _prog, "fr24_url": "", "personal": _personal, "airline": _airline,
-        "logo_code": _iata,
+        "logo_code": _iata, "flight_no": "",
         "countdown_label": vm.countdown_label, "countdown": _disp(vm.countdown_to),
     }
     if _act:
@@ -87,13 +87,45 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
         _url = (f"https://www.flightradar24.com/{_fr24id}" if _fr24id
                 else f"https://www.flightradar24.com/data/flights/{_iata.lower()}{_act.flight_no}")
         _data.update(
-            fid=f"{_prefix}{_act.flight_no}", dep=_act.dep, arr=_act.arr,
+            fid=f"{_prefix}{_act.flight_no}", flight_no=_act.flight_no, dep=_act.dep, arr=_act.arr,
             route=f"{_act.dep}-{_act.arr}", dep_time=_disp(_act.std),
             arr_time=_disp(_act.sta, _act.arr), land=_disp(_act.effective_arrival(), _act.arr),
             fr24_url=_url,
         )
     if vm.home and vm.home.home_eta:
         _data["home"] = _disp(vm.home.home_eta)     # no '~' marker on e-paper
+    # --- duty timeline (for the 'timeline' style): fractions across report->home ---
+    _segs = []; _now_frac = None
+    _dt = vm.duty
+    if _dt and getattr(_dt, "sectors", None):
+        _t0 = _dt.report or _dt.sectors[0].std
+        _t1 = (vm.home.home_eta if (vm.home and vm.home.home_eta) else _dt.sectors[-1].sta)
+        _span = (_t1 - _t0).total_seconds()
+        if _span > 0:
+            _fr = lambda x: max(0.0, min(1.0, (x - _t0).total_seconds() / _span))
+            for _sec in _dt.sectors:
+                _segs.append({"label": f"{_sec.dep}-{_sec.arr}",
+                              "a": _fr(_sec.effective_departure()), "b": _fr(_sec.effective_arrival())})
+            _now_frac = _fr(now)
+    _data["segments"] = _segs
+    _data["now_frac"] = _now_frac
+    def _dur(target):
+        if not target: return ""
+        mins = int((target - now).total_seconds() // 60); sign = "-" if mins < 0 else ""; mins = abs(mins)
+        hh, mm = divmod(mins, 60); return f"{sign}{hh}h{mm:02d}" if hh else f"{sign}{mm}m"
+    _data["report_t"] = _disp(_dt.report) if (_dt and _dt.report) else ""
+    _data["eta_dur"] = _dur(vm.countdown_to)
+    _nd = getattr(vm, "next_duty", None)
+    _data["next_summary"] = _summary_next_flight(vm, flight_prefix, tz_mode, base, suf)
+    _data["next_date"] = _nd.date.strftime("%a %d %b").upper() if _nd else ""
+    _data["next_report"] = (_disp(_nd.report) if (_nd and _nd.report) else "")
+    if _nd and _nd.sectors:
+        _data["next_route"] = "  ".join(f"{x.dep}\u2013{x.arr}" for x in _nd.sectors[:4])
+        _data["next_dep"] = _disp(_nd.sectors[0].std)
+    elif _nd:
+        _data["next_route"] = _nd.raw_code or ""; _data["next_dep"] = ""
+    else:
+        _data["next_route"] = ""; _data["next_dep"] = ""
     s.data = _data
 
 
@@ -111,6 +143,7 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
         s.header, s.line1 = "DAY OFF", "Enjoy it \u2600"
         nxt = _summary_next_flight(vm, flight_prefix, tz_mode, base, suf)
         s.line2 = nxt
+        s.data["next_summary"] = nxt
         return s
 
     if vm.state == DutyState.STANDBY:
@@ -192,7 +225,22 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
 
 
 def _summary_next_flight(vm, flight_prefix, tz_mode, base, suf):
-    return ""
+    """One-line summary of the next real duty, for the day-off board.
+
+    e.g. "THU 25 JUN 06:10Z CPH" (flying) or "THU 25 JUN STBY 06:00Z".
+    """
+    nd = getattr(vm, "next_duty", None)
+    if not nd:
+        return ""
+    date_s = nd.date.strftime("%a %d %b").upper()
+    if nd.sectors:
+        sec = nd.sectors[0]
+        return f"{date_s} {hhmm(sec.std, tz_mode, base) + suf} {sec.arr}"
+    if nd.duty_type == DutyType.STANDBY and nd.standby_start:
+        return f"{date_s} {nd.raw_code or 'STBY'} {hhmm(nd.standby_start, tz_mode, base) + suf}"
+    if nd.report:
+        return f"{date_s} {nd.raw_code or 'DUTY'} {hhmm(nd.report, tz_mode, base) + suf}"
+    return f"{date_s} {nd.raw_code}".strip()
 
 
 def _time_progress(sec, now) -> Optional[float]:
