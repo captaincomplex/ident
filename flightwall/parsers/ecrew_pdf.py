@@ -239,7 +239,7 @@ def _find_year(words: list[dict]) -> int:
 
 
 def _find_header(words: list[dict]):
-    """Crew line looks like:  861234  WYTHE  STEVEN  LGW-CP-319 (one text row)."""
+    """Crew line looks like:  861234  SURNAME  FIRSTNAME  LGW-CP-319 (one text row)."""
     crew_id, crew_name, base = "", "", ""
     id_word = next((w for w in words
                     if w["top"] < 100 and re.fullmatch(r"\d{5,7}", w["t"])), None)

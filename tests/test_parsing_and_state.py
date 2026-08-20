@@ -20,7 +20,7 @@ def _roster():
 def test_parse_counts():
     r = _roster()
     assert r.base == "LGW"
-    assert r.crew_name == "WYTHE STEVEN"
+    assert r.crew_name          # parsed from the roster header
     assert len(r.duties) == 30
     fly = [d for d in r.duties if d.duty_type == DutyType.FLY]
     assert len(fly) == 13
