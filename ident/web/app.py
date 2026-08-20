@@ -1,7 +1,7 @@
 """Flask control panel for the wall.
 
-Run standalone:  python -m flightwall.web.app
-Or it is started in a thread by flightwall.main when web.enabled.
+Run standalone:  python -m ident.web.app
+Or it is started in a thread by ident.main when web.enabled.
 
 Features:
   * Upload a roster (eCrew PDF or .ics) via the browser
@@ -33,7 +33,7 @@ _runtime = {"maps_commute_minutes": None}
 
 
 LOGIN_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Flight Wall - sign in</title>
+<title>Ident - sign in</title>
 <style>
  body{background:#16181c;color:#e8e6de;font-family:-apple-system,Segoe UI,Roboto,sans-serif;
       display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
@@ -46,7 +46,7 @@ LOGIN_PAGE = """<!doctype html><meta name=viewport content="width=device-width,i
         background:#ca7034;color:#fff;font-size:15px;font-weight:600}
  .err{background:#4a2020;color:#ffb3b3;padding:9px;border-radius:8px;font-size:13px;margin-top:14px}
 </style>
-<form method=post><h1>Flight Wall</h1><p class=sub>Sign in to the control panel</p>
+<form method=post><h1>Ident</h1><p class=sub>Sign in to the control panel</p>
 <label>USERNAME</label><input name=username autocomplete=username autocapitalize=none autofocus>
 <label>PASSWORD</label><input name=password type=password autocomplete=current-password>
 <button type=submit>Sign in</button>
@@ -302,7 +302,7 @@ def create_app() -> Flask:
         if not code or not f:
             return jsonify({"ok": False, "message": "Pick an airline code and an image file."}), 400
         import os as _os
-        data_dir = _os.path.expanduser(_os.environ.get("FLIGHTWALL_DATA", "~/.flightwall"))
+        data_dir = _os.path.expanduser(_os.environ.get("IDENT_DATA", "~/.ident"))
         logos = _os.path.join(data_dir, "logos"); _os.makedirs(logos, exist_ok=True)
         ext = (f.filename.rsplit(".", 1)[-1].lower() if "." in (f.filename or "") else "png")
         if ext not in ("png", "jpg", "jpeg"):

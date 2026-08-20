@@ -12,7 +12,27 @@ from dataclasses import asdict, dataclass, field
 
 from .models import Roster, roster_from_dict
 
-DATA_DIR = os.environ.get("FLIGHTWALL_DATA", os.path.expanduser("~/.flightwall"))
+def _data_dir() -> str:
+    """Where config/roster/logos live.
+
+    Honours $IDENT_DATA, else ~/.ident. If ~/.ident doesn't exist yet but an
+    older ~/.flightwall does, adopt the old directory so an upgraded install
+    keeps its roster, logos and settings instead of starting empty.
+    """
+    env = os.environ.get("IDENT_DATA")
+    if env:
+        return env
+    new = os.path.expanduser("~/.ident")
+    old = os.path.expanduser("~/.flightwall")
+    if not os.path.isdir(new) and os.path.isdir(old):
+        try:
+            os.rename(old, new)          # same filesystem: instant, keeps everything
+        except Exception:
+            return old                   # couldn't move; keep using the old one
+    return new
+
+
+DATA_DIR = _data_dir()
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 ROSTER_PATH = os.path.join(DATA_DIR, "roster.json")
 

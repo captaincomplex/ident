@@ -104,6 +104,6 @@ def prefetch():
                 pass
         try:
             _MEM = _build()
-            print(f"[flightwall] coastline cached: {len(_MEM)} landmasses (50m)")
+            print(f"[ident] coastline cached: {len(_MEM)} landmasses (50m)")
         except Exception as e:
-            print(f"[flightwall] coastline download failed ({e}); map runs without land")
+            print(f"[ident] coastline download failed ({e}); map runs without land")

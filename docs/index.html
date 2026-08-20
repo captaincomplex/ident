@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flight Wall — a roster-aware flight display for pilots</title>
+<title>Ident — a roster-aware flight display for pilots</title>
 <meta name="description" content="A Raspberry Pi + LED-matrix wall that reads your airline roster and shows your next flight, live in-flight progress, and your estimated time home.">
 <style>
   :root{
@@ -78,12 +78,12 @@
   <div class="wrap hero">
     <span class="badge">Raspberry Pi · LED matrix · roster-aware</span>
     <h1>Your roster on the wall,<br><span class="g">not whatever plane is overhead</span></h1>
-    <p class="lead">Flight Wall reads <em>your</em> airline roster and shows your next flight and report time.
+    <p class="lead">Ident reads <em>your</em> airline roster and shows your next flight and report time.
       Once you're airborne it tracks the sector you're actually on and gives you a live
       <span class="k">estimated time home</span> next to the landing ETA.</p>
     <div class="cta">
       <a class="btn primary" href="#setup">Get started</a>
-      <a class="btn ghost" href="https://github.com/USERNAME/flightwall">View on GitHub</a>
+      <a class="btn ghost" href="https://github.com/USERNAME/ident">View on GitHub</a>
     </div>
     <div class="shot">
       <img src="img/full_128x32_inflight.png" alt="In-flight view on a 128x32 LED matrix: flight EZY8243 LGW to SKG, a great-circle route arc with a moving aircraft marker, LAND 09:48 and HOME 15:57">
@@ -172,11 +172,11 @@
     <p class="sub">The <span class="mono">simulator</span> renderer runs anywhere and previews the wall in your browser.</p>
 <pre class="mono">python3 -m venv .venv &amp;&amp; source .venv/bin/activate
 pip install -r requirements.txt
-python -m flightwall.main            # simulator + web panel on :8080</pre>
+python -m ident.main            # simulator + web panel on :8080</pre>
     <p>Open <span class="mono">http://localhost:8080</span>, drop in your roster, and the wall renders live.
        For real panels on a Raspberry Pi you additionally build hzeller's
        <span class="mono">rpi-rgb-led-matrix</span> library (it isn't on PyPI) — see the
-       <a href="https://github.com/USERNAME/flightwall#readme">README</a> and
+       <a href="https://github.com/USERNAME/ident#readme">README</a> and
        <span class="mono">INSTALL_PI.md</span>. A step-by-step, no-experience-needed
        <span class="mono">Beginner's Guide</span> covers the e-paper build end to end.</p>
   </div>
@@ -184,9 +184,9 @@ python -m flightwall.main            # simulator + web panel on :8080</pre>
 
 <footer>
   <div class="wrap">
-    <p>Flight Wall — roster edition. Built around an easyJet LGW eCrew roster; airline, base and timezone handling are configurable.</p>
+    <p>Ident — roster edition. Built around an easyJet LGW eCrew roster; airline, base and timezone handling are configurable.</p>
     <p>Airline logos are trademarks and are not bundled — the app only shows image files you upload yourself.
-       · <a href="https://github.com/USERNAME/flightwall">Source on GitHub</a></p>
+       · <a href="https://github.com/USERNAME/ident">Source on GitHub</a></p>
   </div>
 </footer>
 

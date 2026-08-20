@@ -1,5 +1,5 @@
 {
-  "_comment": "Copied to ~/.flightwall/config.json on first run and editable from the web UI. You normally never edit this by hand.",
+  "_comment": "Copied to ~/.ident/config.json on first run and editable from the web UI. You normally never edit this by hand.",
 
   "airline_iata": "U2",
   "airline_icao": "EZY",

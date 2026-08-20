@@ -8,7 +8,7 @@ The web app runs as your normal user; modifying system Wi-Fi connections usually
 needs root, so calls fall back to `sudo -n nmcli`. To allow that without a
 password prompt, add a one-line sudoers rule (see INSTALL_PI.md):
 
-    echo "$USER ALL=(root) NOPASSWD: /usr/bin/nmcli" | sudo tee /etc/sudoers.d/flightwall-nmcli
+    echo "$USER ALL=(root) NOPASSWD: /usr/bin/nmcli" | sudo tee /etc/sudoers.d/ident-nmcli
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def _run(args, timeout=25):
             if "a password is required" in (r2.stderr or "").lower() or "sudo:" in (r2.stderr or "").lower():
                 return False, ("Permission denied. Allow the app to manage Wi-Fi with:\n"
                                "  echo \"$USER ALL=(root) NOPASSWD: /usr/bin/nmcli\" "
-                               "| sudo tee /etc/sudoers.d/flightwall-nmcli")
+                               "| sudo tee /etc/sudoers.d/ident-nmcli")
             return False, (r2.stderr or r.stderr or "nmcli error").strip()
         return False, (r.stderr or r.stdout or "nmcli error").strip()
     except Exception as e:

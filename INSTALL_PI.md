@@ -1,4 +1,4 @@
-# Installing Flight Wall on a Raspberry Pi (headless, e-paper only)
+# Installing Ident on a Raspberry Pi (headless, e-paper only)
 
 You don't need a monitor. The Pi is set up entirely over your network: you SSH
 in to install it, and you configure it from your phone's browser. The e-ink
@@ -17,7 +17,7 @@ panel is the only display it ever drives.
    - **Choose OS:** *Raspberry Pi OS Lite (64-bit)* (under "Raspberry Pi OS (other)"). Lite = no desktop, which is all you need.
    - **Choose Storage:** the SD card.
 3. Click **Next → Edit Settings** (the customisation dialog). This is the important part for headless setup:
-   - **Set hostname:** `flightwall`
+   - **Set hostname:** `ident`
    - **Set username and password:** e.g. user `pilot`, and a password you'll remember.
    - **Configure wireless LAN:** your Wi-Fi SSID + password, and set the **Wi-Fi country** (GB).
    - **Set locale:** your timezone.
@@ -29,7 +29,7 @@ panel is the only display it ever drives.
 1. Put the card in the Pi, plug the Inky in, power it on. Wait ~2 minutes for the first boot.
 2. From your computer's terminal, connect by hostname:
    ```bash
-   ssh pilot@flightwall.local
+   ssh pilot@ident.local
    ```
    (If `.local` doesn't resolve, find the Pi's IP in your router's device list and use `ssh pilot@192.168.x.x`.)
 
@@ -51,14 +51,14 @@ sudo apt install -y python3-venv python3-pip git unzip
 
 ## 5. Get the app onto the Pi
 
-Copy the `flightwall.zip` from your computer (run this in a terminal **on your computer**, not the Pi):
+Copy the `ident.zip` from your computer (run this in a terminal **on your computer**, not the Pi):
 ```bash
-scp ~/Downloads/flightwall.zip pilot@flightwall.local:~/
+scp ~/Downloads/ident.zip pilot@ident.local:~/
 ```
 Then back **on the Pi**:
 ```bash
-unzip flightwall.zip          # creates ~/flightwall
-cd flightwall
+unzip ident.zip          # creates ~/ident
+cd ident
 ```
 
 ## 6. Create a virtual environment and install
@@ -75,9 +75,9 @@ The `inky` install detects your panel automatically at runtime via `inky.auto`.
 
 Generate the default config, then point it at the e-paper + your style:
 ```bash
-python -m flightwall.main --no-web &      # starts once to create ~/.flightwall/config.json
+python -m ident.main --no-web &      # starts once to create ~/.ident/config.json
 sleep 3 ; kill %1                          # stop it
-nano ~/.flightwall/config.json
+nano ~/.ident/config.json
 ```
 Set these values (the rest can stay default):
 ```json
@@ -93,12 +93,12 @@ Save with `Ctrl+O`, `Enter`, exit with `Ctrl+X`. (You can also change all of thi
 ## 8. Run it and load your roster from your phone
 
 ```bash
-source ~/flightwall/.venv/bin/activate
-python -m flightwall.main
+source ~/ident/.venv/bin/activate
+python -m ident.main
 ```
 On your **phone** (same Wi-Fi), open:
 ```
-http://flightwall.local:8080
+http://ident.local:8080
 ```
 There you can: pick the e-paper style, set the sliders (commute / walk / debrief),
 choose the timezone, paste your iCal URL and tap **Pull feed now**, or upload your
@@ -110,39 +110,39 @@ Press `Ctrl+C` in the SSH window to stop it once you've confirmed it works.
 ## 9. Make it start on boot (systemd service)
 
 ```bash
-sudo tee /etc/systemd/system/flightwall.service >/dev/null <<EOF
+sudo tee /etc/systemd/system/ident.service >/dev/null <<EOF
 [Unit]
-Description=Flight Wall
+Description=Ident
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=pilot
-WorkingDirectory=/home/pilot/flightwall
-ExecStart=/home/pilot/flightwall/.venv/bin/python -m flightwall.main
+WorkingDirectory=/home/pilot/ident
+ExecStart=/home/pilot/ident/.venv/bin/python -m ident.main
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl enable --now flightwall.service
+sudo systemctl enable --now ident.service
 ```
 Check it's running:
 ```bash
-systemctl status flightwall.service
-journalctl -u flightwall.service -f      # live logs; Ctrl+C to exit
+systemctl status ident.service
+journalctl -u ident.service -f      # live logs; Ctrl+C to exit
 ```
 
 That's it. The Pi now boots straight into the wall, repaints the Inky as your
-duty progresses, and you manage everything from `http://flightwall.local:8080`
+duty progresses, and you manage everything from `http://ident.local:8080`
 on your phone. No monitor ever required.
 
 ---
 
 ### Troubleshooting
 
-- **`flightwall.local` won't resolve:** use the Pi's IP from your router instead.
+- **`ident.local` won't resolve:** use the Pi's IP from your router instead.
 - **Inky not detected** (`inky.auto` error): re-check SPI **and** I2C are enabled (step 3); the I2C EEPROM is what auto-detects the panel.
 - **Permission errors on SPI/GPIO:** the default user is already in the `spi`, `gpio` and `i2c` groups; if you made a different user, add them with `sudo usermod -aG spi,gpio,i2c pilot` then reboot.
 - **Roster won't parse from the feed:** upload the eCrew PDF in the web panel instead — that path is fully tested.
@@ -155,8 +155,8 @@ hotel network before you travel, so the Pi joins it automatically when you arriv
 Saving a system Wi-Fi network needs admin rights, so grant the app permission once:
 
 ```
-echo "$USER ALL=(root) NOPASSWD: /usr/bin/nmcli" | sudo tee /etc/sudoers.d/flightwall-nmcli
-sudo systemctl restart flightwall
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/nmcli" | sudo tee /etc/sudoers.d/ident-nmcli
+sudo systemctl restart ident
 ```
 
 After that, the **Wi-Fi networks** card on the web page can add, list, and remove

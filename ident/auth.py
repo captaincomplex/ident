@@ -2,7 +2,7 @@
 
 Off by default: with no password set the panel behaves exactly as before, so a
 fresh install on your home network needs no configuration. Set a password (from
-the panel, or `python -m flightwall.main --set-password`) and every page then
+the panel, or `python -m ident.main --set-password`) and every page then
 requires a login.
 
 Passwords are stored only as a salted PBKDF2-SHA256 hash. The session cookie is

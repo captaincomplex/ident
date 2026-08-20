@@ -2,7 +2,7 @@
 # Publish this project to GitHub and enable GitHub Pages (serves /docs on the current branch).
 # Safe to re-run: if the repo or Pages site already exists it just reports and moves on.
 set -uo pipefail
-REPO="flightwall"
+REPO="ident"
 cd "$(dirname "$0")"
 
 # 1) clear any stale git lock left by a synced (Dropbox/iCloud) folder

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flight Wall — roster edition</title>
+<title>Ident — roster edition</title>
 <meta name="description" content="A Raspberry Pi + LED-matrix wall that shows your airline crew roster, tracks your live flight, and estimates your time home.">
 <style>
   :root{
@@ -176,7 +176,7 @@
     <p class="lead">No hardware needed &mdash; renders the wall in your browser.</p>
 <pre>python3 -m venv .venv &amp;&amp; source .venv/bin/activate
 pip install -r requirements.txt
-python -m flightwall.main            # simulator + web panel on :8080</pre>
+python -m ident.main            # simulator + web panel on :8080</pre>
     <p class="lead">Open <code>http://localhost:8080</code>, drop in your roster PDF, and the wall renders live.</p>
     <div class="note">Live tracking (AeroDataBox, Flightradar24 API, or OpenSky), Google Maps drive time,
       the physical LED output and the Vestaboard API need your own keys / hardware, so they're
@@ -187,7 +187,7 @@ python -m flightwall.main            # simulator + web panel on :8080</pre>
 
 <footer>
   <div class="wrap">
-    Flight Wall &mdash; roster edition. See <code>README.md</code> and <code>INSTALL_PI.md</code> in the repository for full setup.
+    Ident &mdash; roster edition. See <code>README.md</code> and <code>INSTALL_PI.md</code> in the repository for full setup.
     <br><a class="cta" href="README.md">Read the docs &rarr;</a>
   </div>
 </footer>

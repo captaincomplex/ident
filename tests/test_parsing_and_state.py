@@ -5,9 +5,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flightwall.parsers.ecrew_pdf import parse_pdf
-from flightwall.models import DutyState, DutyType
-from flightwall.state_engine import compute_view
+from ident.parsers.ecrew_pdf import parse_pdf
+from ident.models import DutyState, DutyType
+from ident.state_engine import compute_view
 
 PDF = "/mnt/user-data/uploads/ScheduleReport_2.pdf"
 UTC = dt.timezone.utc
@@ -86,7 +86,7 @@ def test_state_standby():
 
 def test_ical_event_parse():
     """The AIMS eCrew event format (from a real calendar event)."""
-    from flightwall.parsers.ical_parser import parse_event
+    from ident.parsers.ical_parser import parse_event
     summary = "8301 LGW-MXP"
     location = "(0555Z-0755Z) LGW"
     description = ("Reporting time : 0540\n"
@@ -110,7 +110,7 @@ def test_ical_full_feed():
     except Exception:
         print("(skipped: icalendar not installed)")
         return
-    from flightwall.parsers.ical_parser import parse_ical
+    from ident.parsers.ical_parser import parse_ical
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, "fixtures", "aims_sample.ics"), "rb") as f:
         roster = parse_ical(f.read(), base_iata="LGW")

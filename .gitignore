@@ -21,7 +21,7 @@ venv/
 status.json
 current.png
 
-# Large mockup/export artifacts (source is now in flightwall/) 
+# Large mockup/export artifacts (source is now in ident/) 
 *.zip
 *.mp4
 

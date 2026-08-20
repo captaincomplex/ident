@@ -1,4 +1,4 @@
-# Flight Wall — Complete Beginner's Guide
+# Ident — Complete Beginner's Guide
 
 This guide builds a small screen that hangs on your wall and shows your next
 flight, your current flight's progress, and your estimated time home. It assumes
@@ -19,7 +19,7 @@ An **e-paper display** (the "Inky") is a screen like a Kindle — it looks like
 printed paper, uses almost no power, and holds its picture even when switched off.
 It clips onto the Raspberry Pi. This is what shows your flight info on the wall.
 
-The Pi runs a small program (the "Flight Wall" software you've been given). The
+The Pi runs a small program (the "Ident" software you've been given). The
 program reads your easyJet roster, works out what to show, and draws it on the
 e-paper screen. You control everything from a **web page** on your phone — no
 keyboard needed once it's set up.
@@ -53,7 +53,7 @@ and a short USB cable + plug if you don't already have a spare.
 ## Part 3 — Get the software onto the memory card
 
 The Pi needs an "operating system" (its basic software, like Windows or macOS is
-for your laptop) plus our Flight Wall program. We put the operating system on the
+for your laptop) plus our Ident program. We put the operating system on the
 card first.
 
 1. On your **laptop**, download and install **Raspberry Pi Imager** from the
@@ -68,7 +68,7 @@ card first.
 4. Click **Next**. It will ask *"Would you like to apply OS customisation settings?"*
    Click **Edit Settings**. This is the most important screen — it sets the Pi up so
    it works without a keyboard or monitor:
-   - **Set hostname:** type `flightwall`
+   - **Set hostname:** type `ident`
    - **Set username and password:** username `pilot` (or your name), and a password
      you'll remember. **Write the password down.**
    - **Configure wireless LAN:** type your home Wi-Fi **name** and **password**
@@ -111,7 +111,7 @@ looks intimidating but you'll only copy-and-paste.
 In that window, type this and press Enter:
 
 ```
-ssh pilot@flightwall.local
+ssh pilot@ident.local
 ```
 
 (Use the username you chose if it wasn't `pilot`.)
@@ -121,14 +121,14 @@ ssh pilot@flightwall.local
 - Then it asks for a password — type the password you set in Part 3. **The screen
   won't show anything as you type the password — no dots, no stars. That's normal.**
   Press Enter.
-- When the line changes to something ending in `flightwall:~ $`, **you're in.** You're
+- When the line changes to something ending in `ident:~ $`, **you're in.** You're
   now typing instructions *to the Pi*.
 
 > **If it can't connect** ("could not resolve hostname" or it just hangs): give the
 > Pi another few minutes (first boot is slow), make sure your laptop is on the **same
-> Wi-Fi**, and that you typed the Wi-Fi details correctly in Part 3. If `flightwall.local`
+> Wi-Fi**, and that you typed the Wi-Fi details correctly in Part 3. If `ident.local`
 > never works, log into your home router's admin page, find the device called
-> `flightwall`, note its IP address (like `192.168.1.81`), and use
+> `ident`, note its IP address (like `192.168.1.81`), and use
 > `ssh pilot@192.168.1.81` instead.
 
 ---
@@ -146,7 +146,7 @@ sudo reboot
 ```
 
 ("sudo" just means "do this as the administrator." The reboot will disconnect you —
-that's expected.) Wait a minute, then reconnect with the same `ssh pilot@flightwall.local`.
+that's expected.) Wait a minute, then reconnect with the same `ssh pilot@ident.local`.
 
 ---
 
@@ -166,23 +166,23 @@ sudo apt install -y python3-venv python3-pip unzip fonts-dejavu-core python3-lgp
 
 ---
 
-## Part 8 — Put the Flight Wall program on the Pi
+## Part 8 — Put the Ident program on the Pi
 
-The program came to you as a file called `flightwall.zip`. We copy it from your
+The program came to you as a file called `ident.zip`. We copy it from your
 laptop to the Pi.
 
 1. Open a **second** Terminal window **on your laptop** (leave the Pi one open).
    Don't type `ssh` in this one — this is your laptop.
 2. Assuming the zip is in your Downloads folder, type (one line):
    ```
-   scp ~/Downloads/flightwall.zip pilot@flightwall.local:~/
+   scp ~/Downloads/ident.zip pilot@ident.local:~/
    ```
    Enter your Pi password when asked. This copies the file across.
 3. Switch **back to the Pi Terminal** window and unpack it:
    ```
    cd ~
-   unzip -o flightwall.zip
-   cd flightwall
+   unzip -o ident.zip
+   cd ident
    ```
 
 Now set up the program's own little workspace and install its parts:
@@ -205,14 +205,14 @@ bit lets the program use the button software we installed earlier.)
 Open the settings file in a simple editor called `nano`:
 
 ```
-python -m flightwall.main --no-web
+python -m ident.main --no-web
 ```
 
 Wait about 3 seconds, then press `Ctrl + C` to stop it. (That first run just creates
 the settings file.) Now edit it:
 
 ```
-nano ~/.flightwall/config.json
+nano ~/.ident/config.json
 ```
 
 Use the arrow keys to find these lines and change them so they read like this
@@ -231,7 +231,7 @@ Save and exit: press `Ctrl + O`, then Enter, then `Ctrl + X`.
 Now run it for real:
 
 ```
-python -m flightwall.main
+python -m ident.main
 ```
 
 You should see lines like `Inky detected: 600x448` and `side buttons A/B/C/D armed`.
@@ -246,7 +246,7 @@ While the program is running, on your **phone** (connected to the same Wi-Fi) op
 a web browser and go to:
 
 ```
-http://flightwall.local:8080
+http://ident.local:8080
 ```
 
 This is your control panel. From here you can, with no typing of code:
@@ -279,15 +279,15 @@ Copy-paste this **whole block** at once and press Enter (it writes a small start
 instruction file). If your username isn't `pilot`, change both `pilot` words:
 
 ```
-sudo tee /etc/systemd/system/flightwall.service >/dev/null <<EOF
+sudo tee /etc/systemd/system/ident.service >/dev/null <<EOF
 [Unit]
-Description=Flight Wall
+Description=Ident
 After=network-online.target
 
 [Service]
 User=pilot
-WorkingDirectory=/home/pilot/flightwall
-ExecStart=/home/pilot/flightwall/.venv/bin/python -m flightwall.main
+WorkingDirectory=/home/pilot/ident
+ExecStart=/home/pilot/ident/.venv/bin/python -m ident.main
 Restart=on-failure
 
 [Install]
@@ -299,18 +299,18 @@ Then switch it on:
 
 ```
 sudo systemctl daemon-reload
-sudo systemctl enable --now flightwall
+sudo systemctl enable --now ident
 ```
 
 Check it's happy (press `q` to exit the view):
 
 ```
-systemctl status flightwall
+systemctl status ident
 ```
 
 That's it. **You're done.** You can close everything, unplug the Pi, move it to the
-wall, plug it back in, and a minute later your Flight Wall lights up by itself. You
-manage it forever from `http://flightwall.local:8080` on your phone.
+wall, plug it back in, and a minute later your Ident lights up by itself. You
+manage it forever from `http://ident.local:8080` on your phone.
 
 ---
 
@@ -327,7 +327,7 @@ manage it forever from `http://flightwall.local:8080` on your phone.
 ## If something goes wrong
 
 - **Text is tiny:** the fonts didn't install. Run `sudo apt install -y fonts-dejavu-core`
-  then `sudo systemctl restart flightwall`.
+  then `sudo systemctl restart ident`.
 - **Screen says "Woah there, some pins are in use":** run this once, then reboot —
   `echo "dtoverlay=spi0-0cs" | sudo tee -a /boot/firmware/config.txt` then `sudo reboot`.
 - **Can't reach the web page:** make sure the address ends in **:8080**, and that
@@ -335,10 +335,10 @@ manage it forever from `http://flightwall.local:8080` on your phone.
 - **Want to change which Wi-Fi the Pi uses:** connect with SSH and run `sudo nmtui`,
   choose *Activate a connection*, pick the new network and enter its password.
   (Remember: 2.4GHz only, and you'll briefly lose the connection while it switches.)
-- **Updating to a new version later:** copy the new `flightwall.zip` across (Part 8
-  step 2), then on the Pi: `cd ~ && unzip -o flightwall.zip`, then
-  `find ~/flightwall -name __pycache__ -type d -exec rm -rf {} +`, then
-  `sudo systemctl restart flightwall`. Check the version it prints on startup.
+- **Updating to a new version later:** copy the new `ident.zip` across (Part 8
+  step 2), then on the Pi: `cd ~ && unzip -o ident.zip`, then
+  `find ~/ident -name __pycache__ -type d -exec rm -rf {} +`, then
+  `sudo systemctl restart ident`. Check the version it prints on startup.
 
 ---
 

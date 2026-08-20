@@ -1,12 +1,12 @@
-"""Flight Wall daemon.
+"""Ident daemon.
 
 Each tick it recomputes the current state and renders it. While you're airborne
 it polls the live tracker (at most every poll_seconds) and merges actual times /
 ETA into the active sector so the wall and the home estimate track reality.
 
 Run on the Pi:
-    python -m flightwall.main              # renders to configured output + web UI
-    python -m flightwall.main --no-web     # headless
+    python -m ident.main              # renders to configured output + web UI
+    python -m ident.main --no-web     # headless
 
 The web control panel runs in a background thread on port 8080 by default.
 """
@@ -44,13 +44,13 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
         pass
     if enable_web:
         _start_web(port)
-        print(f"[flightwall] control panel on http://0.0.0.0:{port}")
+        print(f"[ident] control panel on http://0.0.0.0:{port}")
 
     last_poll = 0.0
     last_ical = 0.0
     maps_commute = None
     from . import __version__
-    print(f"[flightwall] v{__version__} started · output={cfg.renderer} · tracker={cfg.tracker}")
+    print(f"[ident] v{__version__} started · output={cfg.renderer} · tracker={cfg.tracker}")
     while True:
         cfg = Config.load()                      # pick up web edits live
         if cfg.ical_url and cfg.ical_refresh_minutes and \
@@ -59,9 +59,9 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
                 from .config import refresh_from_ical
                 n = refresh_from_ical(cfg)
                 if n is not None:
-                    print(f"[flightwall] iCal auto-refresh: {n} duties")
+                    print(f"[ident] iCal auto-refresh: {n} duties")
             except Exception as e:
-                print(f"[flightwall] iCal refresh error: {e}")
+                print(f"[ident] iCal refresh error: {e}")
             last_ical = time.time()
         roster = load_roster()
         now = dt.datetime.now(dt.timezone.utc)
@@ -78,7 +78,7 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
                     update_active_sector(roster, tracker, cfg.airline_iata,
                                          cfg.airline_icao, now)
                 except Exception as e:
-                    print(f"[flightwall] tracker error: {e}")
+                    print(f"[ident] tracker error: {e}")
                 last_poll = time.time()
 
         # Optional live commute time, refreshed near end of duty.
@@ -109,13 +109,13 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
         try:
             renderer.show(screen)
         except Exception as e:
-            print(f"[flightwall] render error: {e}")
+            print(f"[ident] render error: {e}")
 
         time.sleep(tick_seconds)
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Flight Wall daemon")
+    ap = argparse.ArgumentParser(description="Ident daemon")
     ap.add_argument("--no-web", action="store_true", help="disable the web panel")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--tick", type=int, default=30, help="render interval seconds")
@@ -138,7 +138,7 @@ def main():
     try:
         run(enable_web=not args.no_web, port=args.port, tick_seconds=args.tick)
     except KeyboardInterrupt:
-        print("\n[flightwall] stopped")
+        print("\n[ident] stopped")
 
 
 if __name__ == "__main__":

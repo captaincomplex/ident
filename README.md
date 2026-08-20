@@ -1,4 +1,4 @@
-# Flight Wall — roster edition
+# Ident — roster edition
 
 A Raspberry Pi + LED-matrix wall that shows **your** roster, not whatever plane
 happens to be overhead. Between duties it shows your next flight and report
@@ -70,7 +70,7 @@ reduced to a coarse chip-based progress bar, e.g.
 +----------------------+
 ```
 
-A `VestaboardRenderer` is included (`flightwall/render/vestaboard.py`). It
+A `VestaboardRenderer` is included (`ident/render/vestaboard.py`). It
 encodes the screen into the 6×22 character-code array and posts it via either
 the **Read/Write API** (cloud key from the app) or the **Local API** (board IP +
 key, faster and offline). It only pushes when the board content actually changes
@@ -83,7 +83,7 @@ before committing.
 
 | Part | Notes |
 |------|-------|
-| Raspberry Pi Zero 2 W (or Pi 4) | Pi handles the roster/timezone/state logic far more easily than the ESP32 the original Flight Wall uses |
+| Raspberry Pi Zero 2 W (or Pi 4) | Pi handles the roster/timezone/state logic far more easily than the ESP32 the original Ident uses |
 | Adafruit RGB Matrix Bonnet / HAT | Saves hand-wiring the HUB75 GPIO |
 | 2 × 64×32 HUB75 RGB panels (=128×32) | Two chained panels give room for text; a single 64×32 works with more truncation |
 | 5 V / 4 A+ PSU | LED panels are hungry; don't power them from the Pi |
@@ -98,7 +98,7 @@ The text-heavy layout is why two chained panels are recommended — a single
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m flightwall.main            # simulator + web panel on :8080
+python -m ident.main            # simulator + web panel on :8080
 ```
 
 Open <http://localhost:8080>, drop in your roster PDF, and you'll see the wall
@@ -117,7 +117,7 @@ render in the browser. The `simulator` renderer needs no hardware.
 3. In the web panel, set **Output → LED matrix** (and rows/cols/chain to match
    your panels), then run with `sudo` (GPIO access):
    ```bash
-   sudo python -m flightwall.main
+   sudo python -m ident.main
    ```
 4. To start on boot, add a small `systemd` service that runs the same command.
 
@@ -170,7 +170,7 @@ ETA + home-time path.
 ## The iCal feed (AIMS eCrew format — now supported)
 
 The **primary** path is your eCrew calendar feed. The parser
-(`flightwall/parsers/ical_parser.py`) is built for the AIMS eCrew event format,
+(`ident/parsers/ical_parser.py`) is built for the AIMS eCrew event format,
 confirmed from a real event:
 
 ```
@@ -197,7 +197,7 @@ tested fallback.
 ## Project layout
 
 ```
-flightwall/
+ident/
   models.py            roster data model (UTC internally)
   timezones.py         IATA -> tz, UTC/base/station conversion
   parsers/

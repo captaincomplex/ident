@@ -48,7 +48,7 @@ def _ttf(px, bold=True, mono=False):
         except Exception:
             continue
     if not _FONT_WARNED:
-        print("[flightwall] WARNING: DejaVu fonts not found - text will be tiny. "
+        print("[ident] WARNING: DejaVu fonts not found - text will be tiny. "
               "Fix with:  sudo apt install -y fonts-dejavu-core")
         _FONT_WARNED = True
     return ImageFont.load_default()
@@ -148,7 +148,7 @@ def _load_logo(code, h):
     import os
     if not code:
         return None
-    data_dir = os.path.expanduser(os.environ.get("FLIGHTWALL_DATA", "~/.flightwall"))
+    data_dir = os.path.expanduser(os.environ.get("IDENT_DATA", "~/.ident"))
     for ext in ("png", "PNG", "jpg", "jpeg"):
         p = os.path.join(data_dir, "logos", f"{code.upper()}.{ext}")
         if os.path.exists(p):
@@ -600,7 +600,7 @@ def _ctx(screen: Screen):
     elif st == "DAY_OFF":
         title = "DAY OFF"; hero = "OFF"; sub = date; rows = []
     else:
-        title = title or "NO ROSTER"; hero = "FLIGHT WALL"; sub = ""; rows = []
+        title = title or "NO ROSTER"; hero = "IDENT"; sub = ""; rows = []
     _smap={"IN_FLIGHT":"ENROUTE","PRE_FLIGHT":"REPORTED","TURNAROUND":"TURNAROUND",
            "POST_DUTY":"HEADING HOME","BETWEEN_DUTIES":(cdl or "NEXT"),
            "STANDBY":"STANDBY","DAY_OFF":"DAY OFF","NO_ROSTER":"NO ROSTER"}
@@ -657,7 +657,7 @@ class InkyRenderer(Renderer):
         self.inky = auto()
         self.width = getattr(self.inky, "width", width)
         self.height = getattr(self.inky, "height", height)
-        print(f"[flightwall] Inky detected: {self.width}x{self.height}")
+        print(f"[ident] Inky detected: {self.width}x{self.height}")
         self.style = style
         self.styles = styles or [k for k, _ in STYLE_LABELS]
         self.on_style_change = on_style_change
@@ -746,9 +746,9 @@ class InkyRenderer(Renderer):
                 b = Button(pin, pull_up=True, bounce_time=0.1)
                 b.when_pressed = (lambda a=action: a())
                 self._buttons.append(b)
-            print("[flightwall] side buttons A/B/C/D armed")
+            print("[ident] side buttons A/B/C/D armed")
         except Exception as e:
-            print(f"[flightwall] buttons unavailable ({e}); display will still update")
+            print(f"[ident] buttons unavailable ({e}); display will still update")
 
     def clear(self): pass
 
