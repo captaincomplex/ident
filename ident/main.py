@@ -48,6 +48,8 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
 
     last_poll = 0.0
     last_ical = 0.0
+    last_upd = 0.0
+    update_info = {}
     maps_commute = None
     from . import __version__
     print(f"[ident] v{__version__} started · output={cfg.renderer} · tracker={cfg.tracker}")
@@ -63,6 +65,16 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
             except Exception as e:
                 print(f"[ident] iCal refresh error: {e}")
             last_ical = time.time()
+        if cfg.update_check_hours and (time.time() - last_upd >= cfg.update_check_hours*3600):
+            try:
+                from .updates import check as _check
+                update_info = _check(cfg.update_repo)
+                if update_info.get("update_available"):
+                    print(f"[ident] update available: {update_info['latest']} "
+                          f"(running {update_info['current']})")
+            except Exception as e:
+                print(f"[ident] update check failed: {e}")
+            last_upd = time.time()
         roster = load_roster()
         now = dt.datetime.now(dt.timezone.utc)
 

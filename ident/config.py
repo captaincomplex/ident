@@ -49,6 +49,14 @@ class Config:
     ical_url: str = ""
     ical_refresh_minutes: int = 30    # auto-refresh the iCal feed every N minutes (0 = off)
 
+    # Device identity (useful when a pilot runs more than one display)
+    device_name: str = "Ident"
+    setup_complete: bool = False      # False on a fresh install -> show the setup wizard
+
+    # Updates (the device pulls; nothing reaches in from outside)
+    update_repo: str = "captaincomplex/ident"
+    update_check_hours: int = 24      # 0 disables the check entirely
+
     # Web panel login (blank password = no login required)
     auth_user: str = "pilot"
     auth_password_hash: str = ""      # set via the panel or --set-password
@@ -109,6 +117,10 @@ class Config:
             with open(CONFIG_PATH) as f:
                 data = json.load(f)
             known = {k: v for k, v in data.items() if k in cls.__annotations__}
+            if "setup_complete" not in data:
+                # Config written before the setup wizard existed: this is an
+                # already-configured install, so don't send it through setup.
+                known["setup_complete"] = True
             return cls(**known)
         cfg = cls()
         cfg.save()

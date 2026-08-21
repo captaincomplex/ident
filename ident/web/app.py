@@ -32,6 +32,51 @@ from ..tracking.base import update_active_sector
 _runtime = {"maps_commute_minutes": None}
 
 
+SETUP_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Ident - first-time setup</title>
+<style>
+ body{background:#16181c;color:#e8e6de;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      margin:0;padding:24px;display:flex;justify-content:center}
+ .box{background:#20232a;padding:26px;border-radius:14px;max-width:440px;width:100%}
+ h1{font-size:21px;margin:0 0 4px} p.sub{color:#9aa0aa;font-size:13.5px;margin:0 0 20px;line-height:1.5}
+ label{display:block;font-size:11.5px;color:#9aa0aa;margin:16px 0 5px;letter-spacing:.05em}
+ .hint{color:#7b8794;font-size:12px;margin-top:4px}
+ input{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#15171b;
+       color:#e8e6de;font-size:16px;box-sizing:border-box}
+ button{width:100%;margin-top:22px;padding:12px;border:0;border-radius:8px;
+        background:#ca7034;color:#fff;font-size:15px;font-weight:600}
+ .err{background:#4a2020;color:#ffb3b3;padding:9px;border-radius:8px;font-size:13px;margin-top:14px}
+ .step{color:#ca7034;font-size:11.5px;letter-spacing:.08em;margin-bottom:6px}
+</style>
+<form method=post class=box>
+<div class=step>FIRST-TIME SETUP</div>
+<h1>Let's set up your display</h1>
+<p class=sub>Everything here can be changed later from the control panel. Your roster is
+stored on this device only - it is never sent anywhere else.</p>
+
+<label>DISPLAY NAME</label>
+<input name=device_name placeholder="Kitchen" value="Ident">
+
+<label>HOME BASE (IATA)</label>
+<input name=base placeholder="LGW" autocapitalize=characters>
+
+<label>AIRLINE CODE (IATA)</label>
+<input name=airline_iata placeholder="U2" autocapitalize=characters>
+
+<label>ROSTER CALENDAR URL (optional)</label>
+<input name=ical_url placeholder="https://.../basic.ics">
+
+<label>PANEL USERNAME</label>
+<input name=auth_user value="pilot" autocapitalize=none>
+
+<label>PANEL PASSWORD (blank = no login)</label>
+<input name=auth_password type=password autocomplete=new-password>
+
+<button type=submit>Finish setup</button>
+{% if error %}<div class=err>{{ error }}</div>{% endif %}
+</form>"""
+
+
 LOGIN_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Ident - sign in</title>
 <style>
@@ -60,11 +105,53 @@ def create_app() -> Flask:
     app.secret_key = _auth.secret_key()
 
     @app.before_request
+    def _first_run():
+        if request.endpoint in ("setup", "static"):
+            return None
+        cfg = Config.load()
+        if not getattr(cfg, "setup_complete", False):
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "error": "Setup not complete"}), 409
+            return redirect(url_for("setup"))
+        return None
+
+    @app.route("/setup", methods=["GET", "POST"])
+    def setup():
+        cfg = Config.load()
+        if getattr(cfg, "setup_complete", False):
+            return redirect(url_for("index"))
+        error = None
+        if request.method == "POST":
+            f = request.form
+            pw = (f.get("auth_password") or "").strip()
+            if pw and len(pw) < 6:
+                error = "Password must be at least 6 characters (or leave it blank)."
+            else:
+                cfg.device_name = (f.get("device_name") or "Ident").strip() or "Ident"
+                cfg.base = (f.get("base") or cfg.base).strip().upper()
+                cfg.airline_iata = (f.get("airline_iata") or cfg.airline_iata).strip().upper()
+                cfg.ical_url = (f.get("ical_url") or "").strip()
+                cfg.auth_user = (f.get("auth_user") or "pilot").strip() or "pilot"
+                if pw:
+                    cfg.auth_password_hash = _auth.hash_password(pw)
+                    session["fw_auth"] = True
+                cfg.setup_complete = True
+                cfg.save()
+                if cfg.ical_url:
+                    try:
+                        from ..config import refresh_from_ical
+                        refresh_from_ical(cfg)
+                    except Exception:
+                        pass
+                return redirect(url_for("index"))
+        return render_template_string(SETUP_PAGE, error=error), 200
+
+    @app.before_request
     def _require_login():
         cfg = Config.load()
         if not _auth.is_enabled(cfg):
             return None                                  # no password set: open
-        if request.endpoint in ("login", "static"):
+        if request.endpoint in ("login", "setup", "static"):
             return None
         if session.get("fw_auth") is True:
             return None
@@ -324,6 +411,24 @@ def create_app() -> Flask:
                                       form.get("date", ""),
                                       report_minutes=int(form.get("report_minutes", 90)))
         return jsonify({"ok": ok, "message": msg}), (200 if ok else 400)
+
+    @app.route("/api/update/check")
+    def api_update_check():
+        from ..updates import check
+        cfg = Config.load()
+        return jsonify(check(cfg.update_repo))
+
+    @app.route("/api/update/install", methods=["POST"])
+    def api_update_install():
+        from ..updates import check, install, _sha256_from_notes
+        cfg = Config.load()
+        info = check(cfg.update_repo)
+        if not info.get("ok"):
+            return jsonify({"ok": False, "error": info.get("error") or "Could not reach GitHub"}), 502
+        if not info.get("update_available"):
+            return jsonify({"ok": False, "error": "Already up to date"}), 400
+        res = install(info["url"], _sha256_from_notes(info.get("notes", "")))
+        return jsonify(res), (200 if res.get("ok") else 500)
 
     @app.route("/api/commute", methods=["POST"])
     def api_commute():
