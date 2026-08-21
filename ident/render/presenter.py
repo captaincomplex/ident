@@ -120,12 +120,14 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
     _data["next_date"] = _nd.date.strftime("%a %d %b").upper() if _nd else ""
     _data["next_report"] = (_disp(_nd.report) if (_nd and _nd.report) else "")
     if _nd and _nd.sectors:
+        _data["next_dests"] = "/".join(destinations(_nd, base))
         _data["next_route"] = "  ".join(f"{x.dep}\u2013{x.arr}" for x in _nd.sectors[:4])
+        _data["next_sectors"] = len(_nd.sectors)
         _data["next_dep"] = _disp(_nd.sectors[0].std)
     elif _nd:
-        _data["next_route"] = _nd.raw_code or ""; _data["next_dep"] = ""
+        _data["next_route"] = _nd.raw_code or ""; _data["next_dep"] = ""; _data["next_dests"] = ""; _data["next_sectors"] = 0
     else:
-        _data["next_route"] = ""; _data["next_dep"] = ""
+        _data["next_route"] = ""; _data["next_dep"] = ""; _data["next_dests"] = ""; _data["next_sectors"] = 0
     s.data = _data
 
 
@@ -224,10 +226,31 @@ def present(vm: ViewModel, *, tz_mode: str = "base", flight_prefix: str = "EZY",
     return s
 
 
+def destinations(duty, base) -> list[str]:
+    """Where a duty actually takes you: arrival airports that aren't your base.
+
+    A four-sector day like LGW-NTE-LGW-BOD-LGW gives ["NTE", "BOD"], so the
+    board can show both turnarounds rather than only the first one. Duplicates
+    are collapsed (a double out-and-back to the same field shows once), and a
+    duty that somehow never leaves base falls back to its arrival list.
+    """
+    if not duty or not duty.sectors:
+        return []
+    out = []
+    for sec in duty.sectors:
+        if sec.arr and sec.arr != base and sec.arr not in out:
+            out.append(sec.arr)
+    if not out:
+        for sec in duty.sectors:
+            if sec.arr and sec.arr not in out:
+                out.append(sec.arr)
+    return out
+
+
 def _summary_next_flight(vm, flight_prefix, tz_mode, base, suf):
     """One-line summary of the next real duty, for the day-off board.
 
-    e.g. "THU 25 JUN 06:10Z CPH" (flying) or "THU 25 JUN STBY 06:00Z".
+    e.g. "THU 25 JUN 06:10Z NTE/BOD" (flying) or "THU 25 JUN STBY 06:00Z".
     """
     nd = getattr(vm, "next_duty", None)
     if not nd:
@@ -235,7 +258,8 @@ def _summary_next_flight(vm, flight_prefix, tz_mode, base, suf):
     date_s = nd.date.strftime("%a %d %b").upper()
     if nd.sectors:
         sec = nd.sectors[0]
-        return f"{date_s} {hhmm(sec.std, tz_mode, base) + suf} {sec.arr}"
+        dests = "/".join(destinations(nd, base)) or sec.arr
+        return f"{date_s} {hhmm(sec.std, tz_mode, base) + suf} {dests}"
     if nd.duty_type == DutyType.STANDBY and nd.standby_start:
         return f"{date_s} {nd.raw_code or 'STBY'} {hhmm(nd.standby_start, tz_mode, base) + suf}"
     if nd.report:

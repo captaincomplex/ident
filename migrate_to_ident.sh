@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Migrate a Flight Wall install (v3.x) to Ident (v4.0.0).
 #
-# Run on the Pi, after copying ident_4-0-0.zip to your home directory:
+# Run on the Pi, after copying ident_4-1-0.zip to your home directory:
 #     bash ~/ident_migrate/migrate_to_ident.sh
 # or, if you unzipped it already:
 #     bash ~/ident/migrate_to_ident.sh
@@ -16,7 +16,7 @@ OLD_APP="$HOME_DIR/flightwall"
 NEW_APP="$HOME_DIR/ident"
 OLD_DATA="$HOME_DIR/.flightwall"
 NEW_DATA="$HOME_DIR/.ident"
-ZIP="${ZIP:-$HOME_DIR/ident_4-0-0.zip}"
+ZIP="${ZIP:-$HOME_DIR/ident_4-1-0.zip}"
 
 say() { printf '\n\033[1;33m==>\033[0m %s\n' "$*"; }
 
@@ -30,7 +30,7 @@ if [ -f "$ZIP" ]; then
 else
   echo "   $ZIP not found - assuming $NEW_APP is already in place"
 fi
-[ -d "$NEW_APP/ident" ] || { echo "ERROR: $NEW_APP/ident missing. Copy ident_4-0-0.zip to $HOME_DIR first."; exit 1; }
+[ -d "$NEW_APP/ident" ] || { echo "ERROR: $NEW_APP/ident missing. Copy ident_4-1-0.zip to $HOME_DIR first."; exit 1; }
 
 say "3/7  Moving your settings, roster and logos"
 if [ -d "$OLD_DATA" ] && [ ! -d "$NEW_DATA" ]; then

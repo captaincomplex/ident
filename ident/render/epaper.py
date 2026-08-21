@@ -626,9 +626,16 @@ def _next_duty_overlay(w,h,c):
     if not nd:
         d.text((24,180),"No upcoming duty",font=_ttf(40,mono=True),fill=WHITE); return img
     d.text((24,88),nd,font=_ttf(54,mono=True),fill=WHITE)
+    dests=c.get("next_dests") or ""
     route=c.get("next_route") or ""
-    if route: d.text((24,168),route[:26],font=_ttf(38,mono=True),fill=YELLOW)
-    y=244
+    if dests:
+        n=c.get("next_sectors") or 0
+        df=_ttf(38 if len(dests)<=13 else 30 if len(dests)<=18 else 24,mono=True)
+        d.text((24,168),dests[:26],font=df,fill=YELLOW)
+        if n: d.text((24,206),f"{n} sector{'s' if n!=1 else ''}",font=_ttf(20,mono=True),fill=(150,140,90))
+    elif route:
+        d.text((24,168),route[:26],font=_ttf(38,mono=True),fill=YELLOW)
+    y=252
     rep=c.get("next_report")
     if rep:
         d.text((24,y+6),"REPORT",font=_ttf(22,mono=True),fill=(150,140,90)); d.text((230,y),rep,font=_ttf(44,mono=True),fill=WHITE); y+=72
