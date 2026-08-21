@@ -32,6 +32,62 @@ from ..tracking.base import update_active_sector
 _runtime = {"maps_commute_minutes": None}
 
 
+WIFI_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Ident - connect to Wi-Fi</title>
+<style>
+ body{background:#16181c;color:#e8e6de;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      margin:0;padding:22px;display:flex;justify-content:center}
+ .box{background:#20232a;padding:24px;border-radius:14px;max-width:420px;width:100%}
+ h1{font-size:20px;margin:0 0 4px} p.sub{color:#9aa0aa;font-size:13.5px;margin:0 0 18px;line-height:1.5}
+ .net{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;margin-bottom:8px;
+      background:#15171b;border:1px solid #2a2e36;border-radius:10px;color:#e8e6de;
+      font-size:15.5px;text-align:left;cursor:pointer}
+ .net:hover{border-color:#ca7034}
+ .net .s{margin-left:auto;color:#7b8794;font-size:12px}
+ label{display:block;font-size:11.5px;color:#9aa0aa;margin:14px 0 5px;letter-spacing:.05em}
+ input{width:100%;padding:11px;border-radius:9px;border:1px solid #333;background:#15171b;
+       color:#e8e6de;font-size:16px;box-sizing:border-box}
+ button.go{width:100%;margin-top:16px;padding:12px;border:0;border-radius:9px;
+        background:#ca7034;color:#fff;font-size:15px;font-weight:600}
+ .err{background:#4a2020;color:#ffb3b3;padding:10px;border-radius:8px;font-size:13.5px;margin-top:12px}
+ .ok{background:#1e3a2a;color:#a6e7c3;padding:10px;border-radius:8px;font-size:13.5px;margin-top:12px}
+ .note{color:#7b8794;font-size:12px;margin-top:16px;line-height:1.5}
+ a.re{color:#ca7034;font-size:13px;text-decoration:none}
+</style>
+<div class=box>
+<h1>Connect your display</h1>
+<p class=sub>Choose your home Wi-Fi. {% if only24 %}Only 2.4GHz networks are listed - this
+Raspberry Pi cannot see 5GHz ones.{% endif %}</p>
+
+{% if message %}<div class="{{ 'ok' if success else 'err' }}">{{ message }}</div>{% endif %}
+
+{% if not chosen %}
+  <form method=post>
+  {% for n in nets %}
+    <button class=net name=ssid value="{{ n.ssid }}">
+      {{ n.ssid }} <span class=s>{{ n.signal }}%{{ ' - open' if not n.secure else '' }}</span>
+    </button>
+  {% endfor %}
+  </form>
+  {% if not nets %}<p class=sub>No networks found yet.</p>{% endif %}
+  <p class=note><a class=re href="/wifi">Scan again</a></p>
+{% else %}
+  <form method=post>
+    <input type=hidden name=ssid value="{{ chosen }}">
+    <label>NETWORK</label>
+    <input value="{{ chosen }}" disabled>
+    <label>PASSWORD</label>
+    <input name=password type=password autocomplete=current-password autofocus>
+    <button class=go type=submit name=join value="1">Connect</button>
+  </form>
+  <p class=note><a class=re href="/wifi">Choose a different network</a></p>
+{% endif %}
+
+<p class=note>Once connected, this hotspot switches off and your display moves onto your own
+network. Find it again at <b>ident.local:8080</b>.</p>
+</div>"""
+
+
 SETUP_PAGE = """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Ident - first-time setup</title>
 <style>
@@ -106,7 +162,7 @@ def create_app() -> Flask:
 
     @app.before_request
     def _first_run():
-        if request.endpoint in ("setup", "static"):
+        if request.endpoint in ("setup", "wifi_setup", "static"):
             return None
         cfg = Config.load()
         if not getattr(cfg, "setup_complete", False):
@@ -114,6 +170,27 @@ def create_app() -> Flask:
                 return jsonify({"ok": False, "error": "Setup not complete"}), 409
             return redirect(url_for("setup"))
         return None
+
+    @app.route("/wifi", methods=["GET", "POST"])
+    def wifi_setup():
+        from .. import onboarding as ob
+        message = ""; success = False; chosen = ""
+        if request.method == "POST":
+            ssid = (request.form.get("ssid") or "").strip()
+            if request.form.get("join"):
+                ok, msg = ob.join(ssid, request.form.get("password", ""))
+                message, success = msg, ok
+                if ok:
+                    return render_template_string(
+                        WIFI_PAGE, nets=[], chosen="", message=msg, success=True,
+                        only24=ob.radio_is_24ghz_only())
+                chosen = ssid
+            else:
+                chosen = ssid
+        nets = [] if chosen else ob.scan()
+        return render_template_string(WIFI_PAGE, nets=nets, chosen=chosen,
+                                      message=message, success=success,
+                                      only24=ob.radio_is_24ghz_only())
 
     @app.route("/setup", methods=["GET", "POST"])
     def setup():
@@ -151,7 +228,7 @@ def create_app() -> Flask:
         cfg = Config.load()
         if not _auth.is_enabled(cfg):
             return None                                  # no password set: open
-        if request.endpoint in ("login", "setup", "static"):
+        if request.endpoint in ("login", "setup", "wifi_setup", "static"):
             return None
         if session.get("fw_auth") is True:
             return None

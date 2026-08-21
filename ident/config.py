@@ -52,6 +52,7 @@ class Config:
     # Device identity (useful when a pilot runs more than one display)
     device_name: str = "Ident"
     setup_complete: bool = False      # False on a fresh install -> show the setup wizard
+    hotspot_after_seconds: int = 120  # offline this long -> raise the "Ident-Setup" hotspot (0 = never)
 
     # Updates (the device pulls; nothing reaches in from outside)
     update_repo: str = "captaincomplex/ident"

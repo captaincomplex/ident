@@ -49,6 +49,7 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
     last_poll = 0.0
     last_ical = 0.0
     last_upd = 0.0
+    offline_since = None
     update_info = {}
     maps_commute = None
     from . import __version__
@@ -65,6 +66,24 @@ def run(enable_web: bool = True, port: int = 8080, tick_seconds: int = 30):
             except Exception as e:
                 print(f"[ident] iCal refresh error: {e}")
             last_ical = time.time()
+        # No network? Put up our own hotspot so it can be set up from a phone.
+        try:
+            from . import onboarding as _ob
+            if _ob.is_online():
+                offline_since = None
+                if _ob.ap_active():
+                    print("[ident] back online - stopping setup hotspot")
+                    _ob.stop_ap()
+            elif not _ob.ap_active():
+                if offline_since is None:
+                    offline_since = time.time()
+                elif time.time() - offline_since >= cfg.hotspot_after_seconds > 0:
+                    ok, info = _ob.start_ap()
+                    print(f"[ident] offline - setup hotspot '{info}'" if ok
+                          else f"[ident] could not start hotspot: {info}")
+        except Exception as e:
+            print(f"[ident] onboarding check failed: {e}")
+
         if cfg.update_check_hours and (time.time() - last_upd >= cfg.update_check_hours*3600):
             try:
                 from .updates import check as _check
