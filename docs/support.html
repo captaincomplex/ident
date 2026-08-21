@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ident — support</title>
+<meta name="description" content="Get help with Ident: setup questions, roster compatibility, Wi-Fi problems and pre-purchase advice.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="index.html">IDENT<span>.</span></a>
+  <a class="l" href="index.html#how">How it works</a>
+  <a class="l" href="index.html#displays">Displays</a>
+  <a class="l" href="faq.html">FAQ</a>
+  <span class="sp"></span>
+  <a class="l" href="support.html">Support</a>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="badge">we read every message</span>
+  <h1>Get <span class="g">help</span></h1>
+  <p class="lead">Check the <a href="faq.html">FAQ</a> first — it covers most things. If your
+    question isn't there, use the form below and we'll come back to you.</p>
+</div></header>
+
+<section><div class="wrap">
+  <h2>Send a message</h2>
+  <p class="sub">Telling us your display size, Raspberry Pi model and airline up front saves a
+    round trip.</p>
+
+  <!-- =====================================================================
+       SETUP REQUIRED before this form works. Two free steps:
+
+       1. Email address — Cloudflare Dashboard > xpdr.aero > Email > Email
+          Routing. Create support@xpdr.aero and forward it to your personal
+          inbox. Free, and it keeps your real address off this page.
+
+       2. Form delivery — a static site can't send email by itself. Create a
+          free form at formspree.io (or getform.io / basin.com), point it at
+          support@xpdr.aero, then replace YOUR_FORM_ID below with the id they
+          give you. Until then the form will not deliver anything.
+       ===================================================================== -->
+
+  <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+    <label for="name">YOUR NAME</label>
+    <input id="name" name="name" required autocomplete="name">
+
+    <label for="email">EMAIL ADDRESS</label>
+    <input id="email" type="email" name="email" required autocomplete="email">
+    <input type="hidden" name="_subject" value="Ident support enquiry">
+
+    <label for="topic">WHAT'S THIS ABOUT?</label>
+    <select id="topic" name="topic">
+      <option>Before I buy — will it work for me?</option>
+      <option>Roster / airline compatibility</option>
+      <option>Setting it up for the first time</option>
+      <option>Wi-Fi or network trouble</option>
+      <option>Display or hardware problem</option>
+      <option>Remote access</option>
+      <option>Billing or refund</option>
+      <option>Something else</option>
+    </select>
+
+    <label for="airline">AIRLINE (if relevant)</label>
+    <input id="airline" name="airline" placeholder="e.g. easyJet">
+
+    <label for="setup">YOUR SETUP (if you have one)</label>
+    <input id="setup" name="setup" placeholder="e.g. 7.3&quot; Impression on a Pi Zero 2 W, software v4.2.0">
+
+    <label for="message">MESSAGE</label>
+    <textarea id="message" name="message" required
+      placeholder="What's happening, and what you've already tried."></textarea>
+
+    <!-- simple spam trap: real people leave this empty -->
+    <div style="position:absolute;left:-9999px" aria-hidden="true">
+      <label for="company">Company</label>
+      <input id="company" name="_gotcha" tabindex="-1" autocomplete="off">
+    </div>
+
+    <button type="submit">Send message</button>
+  </form>
+
+  <div class="note" style="margin-top:22px;max-width:560px">
+    Prefer email? Write to <a href="mailto:support@xpdr.aero">support@xpdr.aero</a>.
+    We aim to reply within two working days — bear with us, this is run by a working pilot.
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Before you write</h2>
+  <p class="sub">These three cover the majority of messages.</p>
+  <div class="grid">
+    <div class="card"><h3>Wrong date on screen</h3>
+      <p>The Pi has no battery clock. If it loses Wi-Fi it freezes on the last date it knew.
+        Reconnect it and the clock fixes itself in a minute or two.</p></div>
+    <div class="card"><h3>Won't join Wi-Fi</h3>
+      <p>On a Pi Zero 2 W the network <em>must</em> be 2.4GHz — it cannot see 5GHz at all. Check
+        that before anything else.</p></div>
+    <div class="card"><h3>Roster not appearing</h3>
+      <p>Check the calendar link is the full <span class="mono">.ics</span> URL and hasn't expired.
+        Failing that, upload your roster PDF instead.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fl"><a href="index.html">Home</a><a href="faq.html">FAQ</a>
+    <a href="https://github.com/captaincomplex/ident">Source on GitHub</a></div>
+  <p>Ident — a roster display for pilots. Not affiliated with, endorsed by, or connected to any airline.</p>
+</div></footer>
+
+</body></html>

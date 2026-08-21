@@ -88,6 +88,8 @@ class Config:
     epaper_width: int = 600
     epaper_height: int = 448
     epaper_saturation: float = 0.6
+    epaper_panel: str = "auto"        # auto | impression_5_7 | impression_4 | impression_7_3 | impression_13_3
+    epaper_palette: str = "auto"      # auto | acep7 | spectra6
     vestaboard_rw_key: str = ""       # Vestaboard Read/Write API key
     vestaboard_local_ip: str = ""     # optional: local-API IP (faster, offline)
 
@@ -287,8 +289,14 @@ def build_renderer(cfg: Config):
         from .render.epaper import InkyRenderer, STYLE_LABELS
         def _persist(style):
             c = Config.load(); c.epaper_style = style; c.save()
-        return InkyRenderer(style=cfg.epaper_style, width=cfg.epaper_width,
-                            height=cfg.epaper_height, saturation=cfg.epaper_saturation,
+        from .render.epaper import PANELS
+        w, h, pal = cfg.epaper_width, cfg.epaper_height, cfg.epaper_palette
+        if cfg.epaper_panel in PANELS:            # explicit panel choice wins
+            w, h, pal = PANELS[cfg.epaper_panel]
+            if cfg.epaper_palette != "auto":
+                pal = cfg.epaper_palette
+        return InkyRenderer(style=cfg.epaper_style, width=w, height=h,
+                            saturation=cfg.epaper_saturation, palette=pal,
                             styles=[k for k, _ in STYLE_LABELS], on_style_change=_persist)
     from .render.simulator import ConsoleSimulator
     return ConsoleSimulator()

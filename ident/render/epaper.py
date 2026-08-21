@@ -18,7 +18,20 @@ from . import font5x7
 # muted 7-colour ACeP palette (also used as exact fills -> crisp, no dithering)
 BLACK=(22,22,24); WHITE=(236,234,224); RED=(170,55,50); GREEN=(70,118,76)
 BLUE=(52,82,140); YELLOW=(208,178,74); ORANGE=(202,112,52)
-PAL=[*BLACK,*WHITE,*RED,*GREEN,*BLUE,*YELLOW,*ORANGE]
+# ACeP 7-colour (the older 5.7" Impression) and Spectra 6 (current panels,
+# which have no orange). Styles are authored against the 7-colour set; on a
+# Spectra panel the dither maps orange to its nearest available neighbour.
+PAL7=[*BLACK,*WHITE,*RED,*GREEN,*BLUE,*YELLOW,*ORANGE]
+PAL6=[*BLACK,*WHITE,*RED,*GREEN,*BLUE,*YELLOW]
+PAL=PAL7                                   # back-compat alias
+
+# Known panels: name -> (width, height, palette)
+PANELS={
+    "impression_5_7":  (600, 448, "acep7"),      # discontinued, the original build
+    "impression_4":    (600, 400, "spectra6"),
+    "impression_7_3":  (800, 480, "spectra6"),
+    "impression_13_3": (1600,1200,"spectra6"),
+}
 AMBER=ORANGE
 INK_=(30,30,34)
 APT={"LGW":"GATWICK","SKG":"THESSALONIKI","MUC":"MUNICH","CFU":"CORFU","NAP":"NAPLES",
@@ -566,8 +579,12 @@ STYLE_LABELS=[
     ("timeline","Duty timeline"),
 ]
 
-def dither(img):
-    p=Image.new("P",(1,1)); p.putpalette(PAL+[0]*(768-len(PAL)))
+def dither(img, palette="acep7"):
+    pal = PAL6 if palette in ("spectra6", 6, "6") else PAL7
+    # Pad by repeating the last colour: padding with zeros would add extra pure
+    # black entries that pixels can quantise to, polluting the palette.
+    pad = pal[-3:] * ((768 - len(pal)) // 3)
+    p=Image.new("P",(1,1)); p.putpalette(pal + pad)
     return img.quantize(palette=p, dither=Image.FLOYDSTEINBERG).convert("RGB")
 
 def _ctx(screen: Screen):
@@ -609,13 +626,31 @@ def _ctx(screen: Screen):
              status=_smap.get(st,""))
     return d
 
-def render(screen: Screen, style="boarding", w=600, h=448) -> Image.Image:
+DESIGN_H = 448          # styles are authored against this height
+
+def design_size(w: int, h: int) -> tuple[int, int]:
+    """Canvas to compose on for a panel of w x h.
+
+    Height is fixed at the authoring height so vertical rhythm - font sizes,
+    baselines, rule positions - stays exactly as designed. Width follows the
+    panel's aspect ratio, so a wider screen gets *more room* rather than
+    stretched text. The result then scales uniformly to the panel, so nothing
+    is ever distorted.
+    """
+    if h <= 0:
+        return (600, DESIGN_H)
+    return (max(320, int(round(DESIGN_H * w / h))), DESIGN_H)
+
+
+def render(screen: Screen, style="boarding", w=600, h=448,
+           palette="acep7") -> Image.Image:
     ctx = _ctx(screen)
     fn = STYLES.get(style, _board_solari)
-    img = fn(600, 448, ctx)                       # design at canonical resolution
-    if (w, h) != (600, 448):                      # scale to fill the real panel
+    dw, dh = design_size(w, h)
+    img = fn(dw, dh, ctx)                          # compose at the panel's aspect
+    if (w, h) != (dw, dh):                         # uniform scale, no distortion
         img = img.resize((w, h), Image.LANCZOS)
-    return dither(img)
+    return dither(img, palette)
 
 
 def _next_duty_overlay(w,h,c):
@@ -646,10 +681,24 @@ def _next_duty_overlay(w,h,c):
     d.text((24,h-44),ns[:30],font=_ttf(24,mono=True),fill=(205,205,195))
     return img
 
-def render_next_duty(screen, w=600, h=448):
-    ctx=_ctx(screen); img=_next_duty_overlay(600,448,ctx)
-    if (w,h)!=(600,448): img=img.resize((w,h),Image.LANCZOS)
-    return dither(img)
+def render_next_duty(screen, w=600, h=448, palette="acep7"):
+    ctx=_ctx(screen); dw,dh=design_size(w,h); img=_next_duty_overlay(dw,dh,ctx)
+    if (w,h)!=(dw,dh): img=img.resize((w,h),Image.LANCZOS)
+    return dither(img,palette)
+
+def _detect_palette(inky_obj) -> str:
+    """Spectra 6 panels report 6 colours (or a 'spectra' variant name)."""
+    try:
+        n = len(getattr(inky_obj, "DESATURATED_PALETTE", []) or [])
+        name = (getattr(inky_obj, "colour", "") or type(inky_obj).__name__).lower()
+        if "spectra" in name or "el133" in name or "ac073" in name:
+            return "spectra6"
+        if n and n <= 7:
+            return "spectra6" if n <= 6 else "acep7"
+    except Exception:
+        pass
+    return "acep7"
+
 
 class InkyRenderer(Renderer):
     """Push the selected style to a Pimoroni Inky Impression panel.
@@ -659,12 +708,13 @@ class InkyRenderer(Renderer):
         C: contrast/saturation max <-> default      D: next-duty card (7 s)
     """
     def __init__(self, style="boarding", width=600, height=448, saturation=0.6,
-                 styles=None, on_style_change=None):
+                 styles=None, on_style_change=None, palette="auto"):
         from inky.auto import auto          # lazy: only on the Pi
         self.inky = auto()
         self.width = getattr(self.inky, "width", width)
         self.height = getattr(self.inky, "height", height)
-        print(f"[ident] Inky detected: {self.width}x{self.height}")
+        self.palette = _detect_palette(self.inky) if palette == "auto" else palette
+        print(f"[ident] Inky detected: {self.width}x{self.height} ({self.palette})")
         self.style = style
         self.styles = styles or [k for k, _ in STYLE_LABELS]
         self.on_style_change = on_style_change
@@ -678,7 +728,7 @@ class InkyRenderer(Renderer):
         self._last_screen = screen
         if not self.power:
             return
-        img = render(screen, self.style, self.width, self.height)
+        img = render(screen, self.style, self.width, self.height, self.palette)
         self._push(img)
 
     def _push(self, img):
@@ -722,7 +772,7 @@ class InkyRenderer(Renderer):
         from PIL import Image as _I
         canvas = _I.new("RGB", (self.width, self.height), WHITE)
         canvas.paste(qr, ((self.width - qr.size[0]) // 2, (self.height - qr.size[1]) // 2))
-        self._push(dither(canvas))
+        self._push(dither(canvas,self.palette))
         import threading
         def _restore():
             self._last = None
@@ -733,7 +783,7 @@ class InkyRenderer(Renderer):
     def show_next_duty_5s(self):
         if self._last_screen is None:
             return
-        img = render_next_duty(self._last_screen, self.width, self.height)
+        img = render_next_duty(self._last_screen, self.width, self.height, self.palette)
         self._push(img)
         import threading
         def _restore():

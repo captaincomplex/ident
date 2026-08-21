@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ident — frequently asked questions</title>
+<meta name="description" content="Answers about Ident: which display and Raspberry Pi to buy, Wi-Fi requirements, roster compatibility, privacy, remote access, updates and troubleshooting.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="index.html">IDENT<span>.</span></a>
+  <a class="l" href="index.html#how">How it works</a>
+  <a class="l" href="index.html#displays">Displays</a>
+  <a class="l" href="faq.html">FAQ</a>
+  <span class="sp"></span>
+  <a class="l" href="support.html">Support</a>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="badge">questions &amp; answers</span>
+  <h1>Frequently asked <span class="g">questions</span></h1>
+  <p class="lead">If your question isn't here, <a href="support.html">send it over</a> — real
+    answers, from someone who flies the line.</p>
+</div></header>
+
+<section><div class="wrap">
+
+<div class="faqcat">BUYING &amp; HARDWARE</div>
+
+<details open><summary>What exactly am I buying?</summary><div class="body">
+<p>The Ident software, plus a step-by-step illustrated build guide and support. You buy the
+Raspberry Pi, the e-paper display and an SD card yourself, from whichever supplier you like.
+We don't mark up hardware or hold stock, so you pay the going rate.</p></div></details>
+
+<details><summary>Which display should I choose?</summary><div class="body">
+<p>The <strong>7.3″ Inky Impression</strong> is the one to get if you're unsure — readable across
+a room and wide enough for the route maps. The <strong>4.0″</strong> is the budget option and works
+well on a desk. The <strong>13.3″</strong> is a proper wall piece but costs considerably more.</p>
+<p>All of them use Pimoroni's Spectra 6 colour e-paper and all are fully supported.</p></div></details>
+
+<details><summary>I already own the 5.7″ Inky Impression. Will it work?</summary><div class="body">
+<p>Yes, fully. That's the panel Ident was originally built on, and it has seven colours rather than
+six. Pimoroni have discontinued it, so it isn't a sensible choice for a new build, but if you have
+one it will keep working.</p></div></details>
+
+<details><summary>Which Raspberry Pi do I need?</summary><div class="body">
+<p>Any Pi with a 40-pin header. The Zero 2 W is the cheapest and smallest and is the usual choice —
+<strong>but only if your Wi-Fi broadcasts on 2.4GHz</strong> (see the next question). A Pi 3B+, 4 or
+5 will also work and support 5GHz.</p>
+<p>If you buy a plain Zero 2 W you'll need to solder a 40-pin header. Buy the pre-soldered
+<span class="mono">Zero 2 WH</span> version and you won't.</p></div></details>
+
+<details><summary>Why does the Wi-Fi band matter so much?</summary><div class="body">
+<p>The Raspberry Pi Zero 2 W has a 2.4GHz-only radio. It cannot see 5GHz networks — this is a
+hardware limit with no software workaround.</p>
+<p>Most home routers broadcast both bands, so it's usually fine. Problems arise when a router
+publishes a single network name and steers devices onto 5GHz, or when 2.4GHz has been switched off.
+If that's your setup, either enable 2.4GHz, give the 2.4GHz band its own name, or choose a
+dual-band Pi.</p></div></details>
+
+<details><summary>Can I use a phone hotspot?</summary><div class="body">
+<p>Usually not with a Zero 2 W. iPhone hotspots default to 5GHz; turning on
+<em>Maximise Compatibility</em> forces 2.4GHz and generally fixes it. A dual-band Pi avoids the
+problem entirely.</p></div></details>
+
+<details><summary>Does it need to stay plugged in?</summary><div class="body">
+<p>Yes, for updates. E-paper keeps its image without power, so the display doesn't go blank if you
+unplug it — it simply stops changing. Power draw is very low.</p></div></details>
+
+<div class="faqcat">ROSTERS</div>
+
+<details><summary>Which airlines does it work with?</summary><div class="body">
+<p>Ident was built and tested against <strong>easyJet eCrew</strong> calendar feeds. Any roster
+published as a standard <span class="mono">.ics</span> calendar has a good chance of working, and
+PDF rosters can be uploaded too.</p>
+<p>If you fly for another airline, <a href="support.html">get in touch before you buy</a> and we'll
+tell you honestly whether it'll work.</p></div></details>
+
+<details><summary>How does it get my roster?</summary><div class="body">
+<p>You paste your crew calendar link into the control panel once. Ident then re-checks it every 30
+minutes, so roster changes appear without you doing anything.</p></div></details>
+
+<details><summary>Does it handle standby, training and days off?</summary><div class="body">
+<p>Yes. It recognises standby, training and non-flying codes and shows the right screen. On a day
+off it shows your next duty — the date, report time and where you're going.</p></div></details>
+
+<details><summary>What about multi-sector days?</summary><div class="body">
+<p>All destinations are shown, not just the first. A four-sector day reads as
+<span class="mono">NTE/BOD</span>, and a button press gives report time and sector count.</p></div></details>
+
+<details><summary>Can it show flights I'm travelling on as a passenger?</summary><div class="body">
+<p>Yes — personal flights can be added by flight number and are tracked the same way, with the
+report time set for leisure travel rather than duty.</p></div></details>
+
+<div class="faqcat">PRIVACY &amp; DATA</div>
+
+<details open><summary>Where is my roster stored?</summary><div class="body">
+<p>On your device, and nowhere else. It is fetched by your Raspberry Pi, from your airline, over
+your own internet connection. We never receive it, cannot see it, and don't operate a service that
+holds it.</p></div></details>
+
+<details><summary>Do I need an account?</summary><div class="body">
+<p>No. There's no sign-up, no cloud login and no telemetry. The only outbound connections your
+device makes are to your roster feed, an optional flight-tracking service, and a daily check for
+software updates.</p></div></details>
+
+<details><summary>Is my roster confidential to my airline?</summary><div class="body">
+<p>Worth checking your own company's IT and data policies — some airlines have rules about where
+crew data may be processed. Because Ident keeps everything on your own hardware, it's a far easier
+conversation than a cloud service, but the responsibility is yours.</p></div></details>
+
+<div class="faqcat">ACCESS &amp; SETUP</div>
+
+<details><summary>How do I set it up?</summary><div class="body">
+<p>Flash the SD card, plug the display onto the Pi, power it up, and open the setup page in your
+browser. It walks you through your base, airline, roster link and a password. Allow an unhurried
+hour for a first build.</p></div></details>
+
+<details><summary>How do I change settings later?</summary><div class="body">
+<p>Through the control panel in any browser on your home network. You can change display style,
+timing, timezone and roster source from your phone.</p></div></details>
+
+<details><summary>Can I reach it when I'm away from home?</summary><div class="body">
+<p>Yes, and it's optional. The simplest route is a free Cloudflare tunnel, which gives you a web
+address you can open from anywhere without installing anything. Tailscale is the other option and
+gives a permanent private address. Both are free for personal use and neither requires opening
+ports on your router.</p>
+<p>Left switched off, your display is reachable only from your own home network.</p></div></details>
+
+<details><summary>Is the control panel protected?</summary><div class="body">
+<p>You set a username and password during setup. Passwords are stored only as a salted hash. If you
+expose the panel to the internet, use one of the tunnel options above so the connection is
+encrypted.</p></div></details>
+
+<details><summary>Can I run more than one display?</summary><div class="body">
+<p>Yes. Point each one at the same roster link and they'll stay in step by themselves — no server
+in the middle. Give each a name (Kitchen, Study) so you can tell them apart.</p></div></details>
+
+<div class="faqcat">RUNNING IT</div>
+
+<details><summary>How often does the screen update?</summary><div class="body">
+<p>Colour e-paper takes roughly 30 seconds to redraw, so Ident refreshes when something meaningful
+changes rather than continuously. It's a duty board, not a clock.</p></div></details>
+
+<details><summary>How do I get software updates?</summary><div class="body">
+<p>Your display checks for new versions once a day and tells you in the control panel. Installing
+is one click and always your choice — nothing is installed behind your back. The update is
+checksum-verified and the previous version is backed up first.</p></div></details>
+
+<details><summary>The display is showing the wrong day.</summary><div class="body">
+<p>Almost always a network problem. A Raspberry Pi has no battery-backed clock, so if it can't
+reach the internet it keeps the last time it knew. Reconnect it to Wi-Fi and the clock corrects
+itself within a minute or two.</p></div></details>
+
+<details><summary>It won't connect to my Wi-Fi.</summary><div class="body">
+<p>Check the band first — if you're on a Zero 2 W, it must be 2.4GHz. Then check the password and
+that the network name is exactly right, including capitals. You can pre-load extra networks (a
+hotel or crashpad) from the control panel while you're still on a working connection.</p></div></details>
+
+<details><summary>The screen looks washed out or the colours are odd.</summary><div class="body">
+<p>Colour e-paper is muted by nature — it reflects light rather than emitting it. Cold rooms make it
+worse; the panel likes normal room temperature. There's also a contrast toggle on one of the
+buttons.</p></div></details>
+
+<details><summary>Can I get a refund?</summary><div class="body">
+<p>Yes — see the terms at checkout for the statutory cancellation period on digital purchases.
+If Ident won't work with your airline's roster, tell us and we'll sort it out.</p></div></details>
+
+<div class="note" style="margin-top:30px">Still stuck? <a href="support.html">Send us a message</a>
+— include your display size, which Raspberry Pi you're using, and your airline.</div>
+
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fl"><a href="index.html">Home</a><a href="support.html">Support</a>
+    <a href="https://github.com/captaincomplex/ident">Source on GitHub</a></div>
+  <p>Ident — a roster display for pilots. Not affiliated with, endorsed by, or connected to any airline.</p>
+</div></footer>
+
+</body></html>
