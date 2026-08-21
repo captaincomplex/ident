@@ -13,7 +13,9 @@
   <a class="brand" href="/">IDENT<span>.</span></a>
   <a class="l" href="#how">How it works</a>
   <a class="l" href="#displays">Displays</a>
+  <a class="l" href="#styles">Styles</a>
   <a class="l" href="#requirements">Requirements</a>
+  <a class="l" href="parts.html">Parts</a>
   <a class="l" href="faq.html">FAQ</a>
   <span class="sp"></span>
   <a class="l" href="support.html">Support</a>
@@ -100,11 +102,58 @@
     </div>
   </div>
 
+</div></section>
+
+<section id="styles"><div class="wrap">
+  <h2>Thirteen ways to show it</h2>
+  <p class="sub">Every style shows the same duty, and every one adapts to the panel you own.
+    Swap between them from the control panel, or cycle them with a button on the side of the frame.</p>
+
+  <div class="gal">
+    <div class="navbtns">
+      <button type="button" aria-label="Previous style" onclick="railScroll(-1)">&larr;</button>
+      <button type="button" aria-label="Next style" onclick="railScroll(1)">&rarr;</button>
+    </div>
+    <div class="rail" id="rail">
+      <div class="slide"><img loading="lazy" src="img/styles/board_solari.png" alt="Solari departure board style">
+        <div class="t"><h3>Solari board</h3><span>the default</span></div>
+        <p>Split-flap departure board. Big route, landing time, home time, progress along the bottom.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/tiles.png" alt="Tiles dashboard style">
+        <div class="t"><h3>Tiles dashboard</h3><span>most information</span></div>
+        <p>Six colour-headed tiles: flight, route, landing, home, status with progress, and time to run.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/minimal.png" alt="Minimal style with an oversized destination code">
+        <div class="t"><h3>Minimal</h3><span>read it from the hallway</span></div>
+        <p>One enormous destination code and the two times that matter. Nothing else.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/timeline.png" alt="Duty timeline style">
+        <div class="t"><h3>Duty timeline</h3><span>best for long days</span></div>
+        <p>The whole duty as a single bar — report, each sector, then home — with a NOW marker.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/board_flip.png" alt="Flip clock style">
+        <div class="t"><h3>Flip clock</h3><span>retro</span></div>
+        <p>Mechanical flip-tile lettering, like an old station clock.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/board_dot.png" alt="LED dot matrix sign style">
+        <div class="t"><h3>LED dot sign</h3><span>retro</span></div>
+        <p>Dot-matrix lettering in the style of an airport gate sign.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/board_yellow.png" alt="Yellow grid departure board style">
+        <div class="t"><h3>Yellow grid</h3><span>high contrast</span></div>
+        <p>Classic yellow-on-black departures grid. The most legible at distance.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/board_rail.png" alt="Rail blue departure board style">
+        <div class="t"><h3>Rail blue</h3><span>calm</span></div>
+        <p>Softer railway-platform palette for rooms where a black panel would shout.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/swiss.png" alt="Swiss minimalist style">
+        <div class="t"><h3>Swiss</h3><span>typographic</span></div>
+        <p>White, gridded and restrained. Looks like a poster rather than a gadget.</p></div>
+      <div class="slide"><img loading="lazy" src="img/styles/cockpit.png" alt="Cockpit EFIS style">
+        <div class="t"><h3>Cockpit EFIS</h3><span>for the nerds</span></div>
+        <p>Instrument-panel colours and layout. Familiar if you spend your day behind one.</p></div>
+    </div>
+    <div class="galhint"><span class="arrow">&#8596;</span> Scroll or swipe to see them all · two more draw live route maps</div>
+  </div>
+
   <div class="note" style="margin-top:20px">
-    <strong style="color:var(--white)">Thirteen styles, one button to change them.</strong>
-    Departure boards, a tiles dashboard, an oversized destination, a duty timeline, and geographic
-    route maps that draw real coastlines and track your progress along the leg. Pick from the
-    control panel or cycle them with a button on the side of the frame.
+    <strong style="color:var(--white)">Plus two map styles.</strong>
+    A great-circle map and a Lido-style day enroute chart, both drawn on real geography and
+    auto-zoomed to the sector you're flying, with a marker tracking your progress along the leg.
+    Coastlines are downloaded once when you set up and then cached on the device.
   </div>
 </div></section>
 
@@ -138,6 +187,12 @@
   </table>
 
   <div class="note" style="margin-top:18px">
+    <strong style="color:var(--white)">Full parts list and the combinations to avoid:</strong>
+    see <a href="parts.html">the parts page</a>, and the illustrated
+    <a href="guides/ident_assembly_guide.pdf">assembly guide (PDF)</a>.
+  </div>
+
+  <div class="note" style="margin-top:12px">
     <strong style="color:var(--white)">Also on the list:</strong> a microSD card (16GB is ample),
     a power supply to suit your board, and a frame or stand. Any 40-pin Raspberry Pi works — the
     display sits straight on the header, no soldering needed if your Pi has one fitted.
@@ -171,4 +226,12 @@
     or connected to any airline.</p>
 </div></footer>
 
+<script>
+function railScroll(dir){
+  var r=document.getElementById('rail');
+  var s=r.querySelector('.slide');
+  if(!r||!s)return;
+  r.scrollBy({left:dir*(s.getBoundingClientRect().width+16),behavior:'smooth'});
+}
+</script>
 </body></html>

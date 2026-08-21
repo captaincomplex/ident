@@ -8,6 +8,11 @@ nothing here can break your computer.
 
 Set aside about **two hours** for the first build (most of it is waiting).
 
+> **Correct as of version 4.3.0** (August 2026).
+> Ident updates itself, so if your display reports a newer version some screenshots and
+> steps here may have moved on. The version is shown in the control panel; check the
+> release notes on GitHub for anything that has changed since.
+
 ---
 
 ## Part 1 — What you're building, in plain English
@@ -30,23 +35,29 @@ That's the whole thing: **a tiny computer + a paper-like screen + the program.**
 
 ## Part 2 — Shopping list
 
-Prices are rough (early 2026) and will vary — check the page for the current price.
-Links are UK shops since that's likely closest to you; all of these ship from the UK.
+Prices checked August 2026 at The Pi Hut and include VAT. They move — check the page
+for the current price. Links are UK shops; all of these ship from the UK.
 
-| # | What | Why you need it | Rough price | Where |
-|---|------|-----------------|-------------|-------|
-| 1 | **Raspberry Pi Zero 2 W — *with pre-soldered header*** | The tiny computer. "With header" means the row of pins is already attached, so **no soldering**. This is important — don't buy the plain version. | ~£20 | [Pimoroni](https://shop.pimoroni.com/products/raspberry-pi-zero-2-w) · [The Pi Hut](https://thepihut.com/products/raspberry-pi-zero-2) (choose the "with header" option) |
-| 2 | **Pimoroni Inky Impression 5.7"** | The 7-colour e-paper screen with the four buttons. Clips straight onto the Pi, no soldering. | ~£70 | [Pimoroni](https://shop.pimoroni.com/products/inky-impression-5-7) |
-| 3 | **Official Raspberry Pi power supply (micro-USB, 5V 2.5A)** | Powers the Pi. A phone charger *might* work but an official one avoids "not enough power" gremlins. | ~£8 | [The Pi Hut](https://thepihut.com/products/raspberry-pi-universal-power-supply) |
+| # | What | Why you need it | Price | Where |
+|---|------|-----------------|-------|-------|
+| 1 | **Raspberry Pi Zero 2 W — *with pre-soldered header*** | The tiny computer. "With header" means the row of pins is already attached, so **no soldering**. This is important — don't buy the plain version. | £17.30 | [The Pi Hut](https://thepihut.com/products/raspberry-pi-zero-2-w) (choose "Zero 2 W (with header)") |
+| 2 | **Pimoroni Inky Impression 7.3" (2025 Edition)** | The colour e-paper screen with the four buttons. Clips straight onto the Pi's pins, no soldering. | £79.50 | [The Pi Hut](https://thepihut.com/products/inky-impression-7-3-2025-edition) |
+| 3 | **Official Raspberry Pi 12.5W micro-USB power supply** | Powers the Pi. A phone charger *might* work but an official one avoids "not enough power" gremlins. | £7.70 | [The Pi Hut](https://thepihut.com/products/raspberry-pi-zero-uk-power-supply) |
 | 4 | **microSD card, 16–32GB (A1/A2 class)** | This is the Pi's "hard drive". 16GB is plenty. | ~£8 | [The Pi Hut](https://thepihut.com/products/sandisk-microsd-card-class-10-a1) |
 | 5 | **microSD-to-USB adapter** *(only if your laptop has no SD slot)* | Lets you plug the tiny card into your laptop to set it up. | ~£6 | [The Pi Hut](https://thepihut.com/products/microsd-card-usb-reader) |
 
 **Optional but nice:** a small desk stand or a 5×7" photo frame to mount it in,
 and a short USB cable + plug if you don't already have a spare.
 
-> **Two things people get wrong when buying:**
+> **Three things people get wrong when buying:**
 > 1. Get the Pi **"with header"** (pins already attached). Without it you'd need to solder.
-> 2. The Pi Zero 2 W only does **2.4GHz Wi-Fi**, not 5GHz. That matters in Part 4.
+> 2. The Pi Zero 2 W only does **2.4GHz Wi-Fi**, not 5GHz. That matters in Part 4 — if your
+>    router only broadcasts 5GHz, or hides both bands behind one name and pushes devices onto
+>    5GHz, the Zero will never connect. Enable 2.4GHz, or buy a Pi 3B+/4/5 instead (they're
+>    dual-band, but note the Pi 4 and 5 need **USB-C** supplies, not the micro-USB one above).
+> 3. The older **5.7" Inky Impression** — which earlier versions of this guide recommended — has
+>    been discontinued by Pimoroni. Ident still supports it if you already own one, but buy the
+>    7.3" for a new build. The 4.0" and 13.3" panels also work.
 
 ---
 
@@ -202,41 +213,22 @@ bit lets the program use the button software we installed earlier.)
 
 ## Part 9 — Tell it to use the e-paper screen, and start it
 
-Open the settings file in a simple editor called `nano`:
-
-```
-python -m ident.main --no-web
-```
-
-Wait about 3 seconds, then press `Ctrl + C` to stop it. (That first run just creates
-the settings file.) Now edit it:
-
-```
-nano ~/.ident/config.json
-```
-
-Use the arrow keys to find these lines and change them so they read like this
-(leave the others alone):
-
-```
-"renderer": "epaper",
-"epaper_style": "board_solari",
-"base": "LGW",
-"airline_iata": "U2",
-"airline_icao": "EZY",
-```
-
-Save and exit: press `Ctrl + O`, then Enter, then `Ctrl + X`.
-
-Now run it for real:
+Start the program:
 
 ```
 python -m ident.main
 ```
 
-You should see lines like `Inky detected: 600x448` and `side buttons A/B/C/D armed`.
-Within a minute the screen will draw your wall. (It refreshes slowly — 20-35
-seconds — that's normal for e-paper.)
+You should see lines like `Inky detected: 800x480 (spectra6)` and
+`side buttons A/B/C/D armed`. The numbers will match whichever panel you bought —
+`600x400` for the 4.0", `1600x1200` for the 13.3", `600x448 (acep7)` for the older 5.7".
+
+Leave it running and go to Part 10 — you'll do the rest of the setup from your phone,
+with no more typing of code. (There's no settings file to edit by hand any more; the
+first-run wizard handles it.)
+
+> **Older versions:** guides before v4.2.0 told you to run `--no-web` and edit
+> `~/.ident/config.json` in `nano`. That still works, but it isn't necessary now.
 
 ---
 
@@ -249,7 +241,19 @@ a web browser and go to:
 http://ident.local:8080
 ```
 
-This is your control panel. From here you can, with no typing of code:
+The very first time, you'll get a **setup page**. Fill in:
+
+- **Display name** — anything you like ("Kitchen"). Useful if you ever run two.
+- **Home base** — your base airport code, e.g. `LGW`.
+- **Airline code** — e.g. `U2` for easyJet.
+- **Roster calendar URL** — your eCrew `.ics` link, if you have it to hand. You can
+  leave this blank and add it later.
+- **Username and password** — this locks the control panel. Leave the password blank
+  if you'd rather have no login (fine on a home network you trust; not fine if you
+  ever make it reachable from the internet).
+
+Press **Finish setup** and you land on the control panel. From here you can, with no
+typing of code:
 
 - **Roster:** upload your eCrew PDF, or paste your roster calendar (iCal) link and
   tap **Pull feed now**.
@@ -319,8 +323,8 @@ manage it forever from `http://ident.local:8080` on your phone.
 - **Button A** — turn the display on/off
 - **Button B** — change the style (it remembers your choice)
 - **Button C** — boost the colour/contrast, then back to normal
-- **Button D** — show a big QR code for 5 seconds; scan it with your phone to open
-  the live flight on Flightradar24
+- **Button D** — show a **next-duty card** for 7 seconds: the date, where you're going,
+  your report time and first departure. Handy on a day off without reaching for a phone.
 
 ---
 
@@ -353,3 +357,17 @@ manage it forever from `http://ident.local:8080` on your phone.
   without them; you just won't get the live in-air position until they're set.
 - Airline logos are trademarks, so the app doesn't come with any — it simply shows
   the image files *you* upload, which is exactly what you want for your own display.
+
+---
+
+## Keeping it up to date
+
+Ident checks GitHub once a day for a newer version and tells you in the control panel
+when one is available. Installing is a single click and always your choice — nothing is
+installed behind your back. The download is checked against a published checksum and
+your current version is backed up first, so a failed update leaves the working one alone.
+
+---
+
+*Correct as of version 4.3.0 — August 2026.*
+*When Ident is updated, this guide is reviewed and this line is updated with it.*

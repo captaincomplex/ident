@@ -103,3 +103,24 @@ button:hover{opacity:.92}
 footer{padding:38px 0 56px;color:var(--muted);font-size:13.5px}
 footer a{color:var(--muted)}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px}
+
+/* --- scrollable style gallery --- */
+.gal{position:relative;margin-top:6px}
+.rail{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:4px 2px 16px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.rail::-webkit-scrollbar{height:8px}
+.rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.rail::-webkit-scrollbar-track{background:transparent}
+.slide{flex:0 0 clamp(280px,74vw,560px);scroll-snap-align:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.slide img{width:100%;display:block;border-radius:8px;background:#000}
+.slide .t{display:flex;align-items:baseline;gap:9px;margin-top:12px}
+.slide .t h3{margin:0;font-size:16px}
+.slide .t span{color:var(--muted);font-size:12.5px}
+.slide p{color:var(--muted);font-size:14px;margin:5px 0 0}
+.galhint{color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:8px;margin-top:2px}
+.galhint .arrow{color:var(--accent)}
+.navbtns{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+.navbtns button{margin:0;padding:7px 14px;background:var(--panel);color:var(--ink);
+  border:1px solid var(--line);border-radius:9px;font-size:16px;font-weight:600;line-height:1}
+.navbtns button:hover{border-color:var(--accent);color:var(--accent)}

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ident — parts list</title>
+<meta name="description" content="Everything you need to build an Ident display, which parts work together, and the combinations to avoid.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="index.html">IDENT<span>.</span></a>
+  <a class="l" href="index.html#displays">Displays</a>
+  <a class="l" href="parts.html">Parts</a>
+  <a class="l" href="faq.html">FAQ</a>
+  <span class="sp"></span>
+  <a class="l" href="support.html">Support</a>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="badge">buy your own parts · no markup</span>
+  <h1>What to buy, <span class="g">and what not to pair</span></h1>
+  <p class="lead">Ident is software — you source the hardware yourself. Here's the reference build,
+    every supported alternative, and the combinations that will waste your money.</p>
+</div></header>
+
+<section><div class="wrap">
+  <h2>The reference build</h2>
+  <p class="sub">If you don't want to think about it, buy these four things. This is the
+    combination the software is developed and tested against.</p>
+  <table>
+    <tr><th>Part</th><th>Which one</th><th>Indicative</th></tr>
+    <tr><td class="k">Display</td>
+      <td>Pimoroni Inky Impression 7.3″ (2025 Edition) — 800×480, Spectra 6</td><td>£79.50</td></tr>
+    <tr><td class="k">Computer</td>
+      <td>Raspberry Pi Zero 2 W <strong>with header</strong> (“WH”) — no soldering</td><td>£17.30</td></tr>
+    <tr><td class="k">Power supply</td>
+      <td>Official 12.5W micro-USB supply, UK plug</td><td>£7.70</td></tr>
+    <tr><td class="k">microSD card</td>
+      <td>Any branded 16–32GB A1 card</td><td>~£8</td></tr>
+    <tr><td class="k"></td><td><strong>Total</strong></td><td><strong>~£113</strong></td></tr>
+  </table>
+  <div class="note" style="margin-top:16px">Prices checked at The Pi Hut in August 2026 and include
+    UK VAT. They move — treat them as indicative, not a quote. You'll also need a microSD card reader
+    if your computer hasn't got one, and a frame or stand.</div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Displays</h2>
+  <p class="sub">All are Pimoroni Inky Impression panels and all are supported. Layouts adapt to
+    whichever you choose.</p>
+  <table>
+    <tr><th>Panel</th><th>Resolution</th><th>Colours</th><th>Verdict</th></tr>
+    <tr><td class="k">7.3″ (2025)</td><td class="mono">800×480</td><td>6 (Spectra)</td>
+      <td><span class="yes">Recommended.</span> Best balance of size, price and legibility.</td></tr>
+    <tr><td class="k">4.0″</td><td class="mono">600×400</td><td>6 (Spectra)</td>
+      <td>Cheapest entry. Fine on a desk; small for a wall.</td></tr>
+    <tr><td class="k">13.3″</td><td class="mono">1600×1200</td><td>6 (Spectra)</td>
+      <td>Superb but expensive, and noticeably slower to redraw.</td></tr>
+    <tr><td class="k">5.7″</td><td class="mono">600×448</td><td>7 (ACeP)</td>
+      <td><span class="no">Discontinued.</span> Supported if you own one; don't hunt for it.</td></tr>
+  </table>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Computers</h2>
+  <p class="sub">Any Raspberry Pi with a 40-pin header works. The Wi-Fi band is the thing that
+    catches people out.</p>
+  <table>
+    <tr><th>Board</th><th>2.4GHz</th><th>5GHz</th><th>Power connector</th><th>Notes</th></tr>
+    <tr><td class="k">Zero 2 WH</td><td class="yes">Yes</td><td class="no">No</td><td>micro-USB</td>
+      <td>The default choice. Header pre-fitted. Lowest power draw.</td></tr>
+    <tr><td class="k">Zero 2 W</td><td class="yes">Yes</td><td class="no">No</td><td>micro-USB</td>
+      <td>£3 cheaper but you must solder a 40-pin header yourself.</td></tr>
+    <tr><td class="k">Pi 3 Model B+</td><td class="yes">Yes</td><td class="yes">Yes</td><td>micro-USB</td>
+      <td>Dual-band and has Ethernet. Bulkier behind a frame.</td></tr>
+    <tr><td class="k">Pi 4 Model B</td><td class="yes">Yes</td><td class="yes">Yes</td><td>USB-C 3A</td>
+      <td>Dual-band, fast, runs warm. Needs its own USB-C supply.</td></tr>
+    <tr><td class="k">Pi 5</td><td class="yes">Yes</td><td class="yes">Yes</td><td>USB-C 5A</td>
+      <td>Overkill, and needs the 27W supply. Works fine.</td></tr>
+  </table>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Combinations that don't work</h2>
+  <p class="sub">Every one of these has cost somebody an evening.</p>
+
+  <div class="warn">
+    <strong>Pi Zero 2 W + a 5GHz-only network</strong>
+    <p>The Zero's radio is 2.4GHz only. If your router broadcasts one network name and steers
+      devices to 5GHz, or 2.4GHz is switched off, it will never connect and no amount of
+      configuration will fix it. Enable 2.4GHz, split the band names, or buy a dual-band Pi.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Pi 4 or Pi 5 + a micro-USB power supply</strong>
+    <p>Wrong connector entirely — these need USB-C. A Pi 5 also needs a 5A/27W supply; feed it less
+      and it will brown out mid-refresh and corrupt the SD card. Buy the supply that matches
+      the board.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Plain Zero 2 W (no header) + any Inky panel</strong>
+    <p>There's nothing to plug the display into. Either solder a 40-pin header or buy the “WH”
+      version with one already fitted. This is the single most common ordering mistake.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Any Pi case + a display fitted</strong>
+    <p>The panel sits on the GPIO header, so almost no standard case will close with it attached.
+      Plan on a frame or open mount instead of a case.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Another HAT (PoE, fan, audio) + the display</strong>
+    <p>The Inky uses the GPIO header, SPI and I2C. Stacking a second HAT will usually conflict.
+      Run one HAT only.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Your own longer screws or standoffs</strong>
+    <p>Pimoroni warn that fixings with longer threads than the supplied ones can crack the glass.
+      Use what comes in the box.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Raspberry Pi 400 + the display</strong>
+    <p>Technically compatible, but the GPIO header points backwards out of the keyboard, so the
+      panel ends up at an absurd angle. You'd need a GPIO extension cable.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Optional extras</h2>
+  <div class="grid">
+    <div class="card"><h3>Dual-band USB Wi-Fi</h3>
+      <p>The cheap route to 5GHz on a Zero 2 W: a Linux-compatible dual-band adapter plus a
+        micro-USB OTG adapter. Fiddlier, and driver support varies — check before buying.</p></div>
+    <div class="card"><h3>Frame or stand</h3>
+      <p>A deep-rebate photo frame or 3D-printed stand. The 7.3″ panel is about 170×110mm; leave
+        room behind for the Pi and the cable.</p></div>
+    <div class="card"><h3>microSD card reader</h3>
+      <p>Needed once, to flash the card — and again if you ever need to recover a device that
+        won't join Wi-Fi. Worth owning.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fl"><a href="index.html">Home</a><a href="faq.html">FAQ</a><a href="support.html">Support</a></div>
+  <p>Ident — a roster display for pilots. We don't sell hardware and take no commission from any
+    supplier listed. Not affiliated with, endorsed by, or connected to any airline.</p>
+</div></footer>
+
+</body></html>
