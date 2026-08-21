@@ -76,7 +76,7 @@
 
 <header>
   <div class="wrap hero">
-    <span class="badge">Raspberry Pi · LED matrix · roster-aware</span>
+    <span class="badge">Raspberry Pi · e-paper · roster-aware</span>
     <h1>Your roster on the wall,<br><span class="g">not whatever plane is overhead</span></h1>
     <p class="lead">Ident reads <em>your</em> airline roster and shows your next flight and report time.
       Once you're airborne it tracks the sector you're actually on and gives you a live
@@ -86,8 +86,8 @@
       <a class="btn ghost" href="https://github.com/captaincomplex/ident">View on GitHub</a>
     </div>
     <div class="shot">
-      <img src="img/full_128x32_inflight.png" alt="In-flight view on a 128x32 LED matrix: flight EZY8243 LGW to SKG, a great-circle route arc with a moving aircraft marker, LAND 09:48 and HOME 15:57">
-      <div class="cap mono">In-flight · 128×32 LED · great-circle route arc, live marker, landing time + your home time</div>
+      <img src="img/style_solari_inflight.png" alt="In-flight view on a 5.7 inch colour e-paper display, styled as a solari departure board: EZY8243 LGW-CPH, LANDS 09:05, HOME 12:20, with a progress bar along the bottom">
+      <div class="cap mono">In-flight · 5.7″ colour e-paper · solari board · landing time, your home time, live progress</div>
     </div>
   </div>
 </header>
@@ -99,7 +99,7 @@
     <div class="grid">
       <div class="card">
         <h3>Reads your roster</h3>
-        <p>Primary path is an <span class="k">iCal feed</span> from eCrew — point it at the <span class="mono">.ics</span> URL and it pulls duties automatically. Fallback: upload the eCrew Personal Crew Schedule Report <span class="k">PDF</span> (or any .ics) on the web page.</p>
+        <p>Primary path is an <span class="k">iCal feed</span> from eCrew — point it at the <span class="mono">.ics</span> URL and it re-pulls itself <span class="k">every 30 minutes</span>, so a roster change appears on the wall without you touching anything. Fallback: upload the eCrew Personal Crew Schedule Report <span class="k">PDF</span> (or any .ics) on the web page.</p>
       </div>
       <div class="card">
         <h3>Knows what to show</h3>
@@ -124,7 +124,15 @@
       </div>
       <div class="card">
         <h3>Web control panel</h3>
-        <p>A Flask panel on port 8080 for uploads, sliders and the timezone toggle — plus a live preview of the wall with a <span class="k">time-travel</span> field to see what it'll show when you land.</p>
+        <p>A Flask panel on port 8080 for uploads, sliders, the style picker and the timezone toggle — plus a live preview of the wall with a <span class="k">time-travel</span> field to see what it'll show when you land. Optional <span class="k">username/password</span> login, so it can be reached from away without leaving it open.</p>
+      </div>
+      <div class="card">
+        <h3>Buttons on the frame</h3>
+        <p>Four side buttons: power, cycle style, contrast, and a <span class="k">next-duty card</span> — a quick glance at tomorrow's report time and sectors without touching a phone.</p>
+      </div>
+      <div class="card">
+        <h3>Travels with you</h3>
+        <p>Pre-load hotel or crashpad Wi-Fi from the panel while you're still on a working network, and it joins automatically when you arrive. Non-flying codes like <span class="mono">WFTU</span> are read as days off.</p>
       </div>
     </div>
   </div>
@@ -132,21 +140,45 @@
 
 <section>
   <div class="wrap">
-    <h2>Three ways to show it</h2>
-    <p class="sub">The output renderer is selectable in the control panel.</p>
+    <h2>Built for e-paper</h2>
+    <p class="sub">The reference build is a Raspberry Pi Zero 2 W behind a 5.7″ seven-colour Inky Impression — paper-like, near-zero power, and it holds its image even with the power off. Other renderers are selectable in the control panel.</p>
     <div class="outputs">
       <div class="out"><figure>
-        <img src="img/hub75_64x64.png" alt="64x64 HUB75 LED matrix showing IN FLIGHT EZY8243 LGW-SKG with a route arc and LAND / HOME times">
-        <figcaption><h3>Full &amp; compact LED</h3><p>128×32 (recommended) shows a full-width route map with a moving marker. A single 64×32 works too, with more truncation and scrolling on long routes.</p></figcaption>
+        <img src="img/style_tiles_inflight.png" alt="E-paper tiles dashboard: six colour-headed tiles showing flight 8243, route LGW-CPH, lands 09:05, home 12:20, status ENROUTE with a progress bar, and ETA in 55m">
+        <figcaption><h3>E-paper (Inky) — the main build</h3><p>Thirteen selectable looks, picked from a thumbnail grid in the panel: departure boards, a tiles dashboard, a minimal XL destination, a duty timeline, and geographic route maps.</p></figcaption>
       </figure></div>
       <div class="out"><figure>
-        <img src="img/epaper_solari_inflight.png" alt="E-paper Inky display styled as a solari split-flap board showing flight info">
-        <figcaption><h3>E-paper (Inky)</h3><p>A Pimoroni Inky Impression style with several looks (solari board, boarding pass, minimal). Paper-like, near-zero power, holds its image when off.</p></figcaption>
+        <img src="img/hub75_64x64.png" alt="64x64 HUB75 LED matrix showing IN FLIGHT EZY8243 LGW-SKG with a route arc and LAND / HOME times">
+        <figcaption><h3>LED matrix</h3><p>128×32 shows a full-width route map with a moving marker; a single 64×32 works too, with more truncation on long routes. Needs hzeller's rpi-rgb-led-matrix built on the Pi.</p></figcaption>
       </figure></div>
       <div class="out"><figure>
         <img src="img/splitflap.png" alt="Split-flap / Vestaboard style rendering of the flight board">
         <figcaption><h3>Vestaboard / split-flap</h3><p>A 6×22 character renderer for the text states, with the route reduced to a coarse chip-based progress bar. Great for text, weak for a smooth live map.</p></figcaption>
       </figure></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Pick a look</h2>
+    <p class="sub">Every style is state-aware — the same screen knows whether you're on a day off, heading to report, airborne or on your way home. Switch styles from the panel, or cycle them with a button on the side of the frame.</p>
+    <div class="outputs">
+      <div class="out"><figure>
+        <img src="img/style_minimal_inflight.png" alt="Minimal style: the destination code CPH in very large condensed type, with GATWICK to COPENHAGEN beneath and LANDS 09:05, HOME 12:20">
+        <figcaption><h3>Minimal</h3><p>One enormous destination code and the two times that matter. Readable from across the room.</p></figcaption>
+      </figure></div>
+      <div class="out"><figure>
+        <img src="img/style_timeline_inflight.png" alt="Duty timeline style: a horizontal bar showing both sectors of the day with a red NOW marker part-way along">
+        <figcaption><h3>Duty timeline</h3><p>The whole duty as one bar — report, each sector, then home — with a <span class="k">NOW</span> marker. Best on multi-sector days.</p></figcaption>
+      </figure></div>
+      <div class="out"><figure>
+        <img src="img/style_dayoff_nextduty.png" alt="Day off style: large OFF with today's date, and a separated NEXT DUTY block reading FRI 21 AUG 07:10 CPH">
+        <figcaption><h3>Day off</h3><p>Today's date up top, and a clearly separated <span class="k">next duty</span> block below — date, report time and where you're going.</p></figcaption>
+      </figure></div>
+    </div>
+    <div class="note" style="margin-top:18px">
+      <strong>Route maps.</strong> Two of the styles — a great-circle map and a Lido-style day enroute chart — draw the actual route on real geography, auto-zoomed to the sector you're flying, with a marker tracking your progress. Coastlines are downloaded once on first run and cached on the device, so rendering afterwards needs no network and no geo libraries.
     </div>
   </div>
 </section>
